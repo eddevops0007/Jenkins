@@ -6,8 +6,8 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonOutput
 import java.net.URL
 
-echo "This Build is EdsFixGeneratePipeline Version 01.00.0001"
-echo "It was last updated on August 22, 2020"
+echo "This Build is EdsFixGeneratePipeline Version 01.00.0002"
+echo "It was last updated on Oct 18, 2020"
 echo "The ISPW Stream being used is: ${ISPW_Stream}"
 echo "The ISPW Application being used is: ${ISPW_Application}"
 echo "The ISPW Container being used is: ${ISPW_Container}"
