@@ -80,6 +80,9 @@ String SQ_Project         = "Eds_FIX_Generate_Pipeline_V1" // Your SonarQube pro
 
 stage("Download Source from ISPW")
 {
+    // Choose the folllowing from the Jenkins Snippet Generator:
+    //      checkout: Check out from version control
+    //          SCM : Choose ISPW Repository
 
     node{
         //Download the source
@@ -91,7 +94,7 @@ stage("Download Source from ISPW")
         serverApplication: "${ISPW_Application}", 
         serverConfig: "${ISPW_RuntimeConfig}", 
         serverLevel: "${ISPW_Level}", 
-        ispwDownloadIncl: true, 
+        ispwDownloadIncl: true,                                 // Download Includes (Copybooks)
         serverStream: "${ISPW_Stream}"])
     }
 
