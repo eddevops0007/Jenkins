@@ -100,3 +100,21 @@ stage("Download Tests from Github")
 
     }
 }
+
+stage("Run Total Test")
+{
+    node{
+
+        totaltest clearCodeCoverage: true, 
+        collectCCRepository: 'HDAELG0.CODE.COVERAGE', 
+        collectCCSystem: 'TEST1', 
+        collectCCTestID: 'TEST1', 
+        collectCodeCoverage: true, 
+        credentialsId: 'hdaelg0', 
+        environmentId: '5b5f2a71787be73b59238d7b', 
+        folderPath: '', 
+        recursive: true, 
+        selectProgramsOption: true, 
+        serverUrl: 'http://cwcc.compuware.com:2020'
+    }
+}
