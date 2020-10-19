@@ -156,7 +156,7 @@ stage("SonarQube Analysis")
         withSonarQubeEnv('localhost') 
         {
             // Run SonarQube Scanner 
-            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
+            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml"
             def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
             def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
             def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
