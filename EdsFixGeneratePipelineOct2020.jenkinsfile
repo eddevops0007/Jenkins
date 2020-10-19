@@ -80,3 +80,23 @@ stage("Download Source from ISPW")
     }
 
 } 
+
+stage("Download Tests from Github")
+{
+    node{
+
+       //Download the test from github
+        checkout changelog: false, 
+           poll: false, 
+           scm: [$class: 'GitSCM', 
+           branches: [[name: '*/master']], 
+           doGenerateSubmoduleConfigurations: false, 
+           extensions: [], 
+           submoduleCfg: [], 
+           userRemoteConfigs: 
+              [[credentialsId: github_credentials, 
+              name: 'origin', 
+              url: github_url]]]
+
+    }
+}
