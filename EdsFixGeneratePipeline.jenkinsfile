@@ -26,9 +26,9 @@ String Jenkins_CES       = "hdaelg0ces"   // A secret text credential containing
 String CES_Token         = "8ade625f-07a2-4be6-a9f8-0653c5969d07"   // Ed's CES Token using hdaelg0
 
 // Github specifications
-String github_credentials = "SharkWorks1_Github" // ID that was created in Jenkins containing Ed's github ID/PW
+String github_credentials = "SharkWorks1_Github" // ID that was created in Jenkins containing Ed's github ID/PW for eddevops0007
 //String github_url         = "https://github.com/SharkWorks1/EdsFixPipeline.git" // The github URL where your TTT test is stored Old 07/27/2020
-String github_url         = "https://github.com/SharkWorks1/CWXTCOB_GIT_DEMO0001.git" // The github URL where your TTT test is stored
+String github_url         = "https://github.com/eddevops0007/TopazForTotalTest.git" // The github URL where your TTT test is stored
 
 // ISPW Levels and container to be used by the promote/deploy/generate/regress operations
 String ISPW_ContainerType = "assignments"   // Valid values are assignments or releases
@@ -42,7 +42,7 @@ String ISPW_RuntimeConfig = "ISPW"          // ISPW or ISPT
 
 // Directory for tests that are downloaded to the jenkins workspace
 //String TTT_Project        = "EdsFixPipeline"  // The name of your TTT project  Old 07/27/2020
-String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project
+String TTT_Project        = "CWXTCOB Including Called Programs"  // The name of your TTT project
 
 // Total Test JCL and Scenario/Testsuite used in CI process
 String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
@@ -52,7 +52,7 @@ String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
 String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
 
 // SonarQube ID used for both project key and project name
-String SQ_Project         = "Eds_FIX_Generate_Pipeline_V1" // Your SonarQube project name
+String SQ_Project         = "Eds_FIX_Generate_Pipeline_V2" // Your SonarQube project name
 
 // XL Release values
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
@@ -120,101 +120,101 @@ stage("Download Tests from Github")
     }
 }
  
-stage("Run Total Tests")
-{
-    node{
-        // Run Total Test Jenkins Plugin
-        totaltestUT ccRepo:"${CC_repository}",
-            ccSystem: "${TTT_Project}",
-            ccTestId: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
-            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
-            credentialsId: "${Jenkins_Id}",
-            hlq: '',
-            jcl: "${TTT_Jcl}",
-            projectFolder: "${TTT_Project}",
-            testSuite: "${TTT_TestPackage}${TTT_PackageType}", 
-            useStubs: true
+// stage("Run Total Tests")
+// {
+//     node{
+//         // Run Total Test Jenkins Plugin
+//         totaltestUT ccRepo:"${CC_repository}",
+//             ccSystem: "${TTT_Project}",
+//             ccTestId: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
+//             connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+//             credentialsId: "${Jenkins_Id}",
+//             hlq: '',
+//             jcl: "${TTT_Jcl}",
+//             projectFolder: "${TTT_Project}",
+//             testSuite: "${TTT_TestPackage}${TTT_PackageType}", 
+//             useStubs: true
                     
-        // Process the Total Test result files into Jenkins
-        junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
-    }
-}
+//         // Process the Total Test result files into Jenkins
+//         junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
+//     }
+// }
 
-stage("Retrieve Code Coverage Data")
-{
-    node{
-        // Retrieve code coverage data
-        string sources="${ISPW_Application}\\MF_Source"
-        def ccproperties   = 'cc.sources=' + sources + 
-        '\rcc.repos=' + CC_repository + 
-        '\rcc.system=' + TTT_Project + 
-        '\rcc.test=' + BUILD_DISPLAY_NAME + 
-        '\rcc.ddio.overrides='
-        step([$class: 'CodeCoverageBuilder',
-        analysisProperties: ccproperties,
-            analysisPropertiesPath: '',
-            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
-            credentialsId: Jenkins_Id])
-    }
-}
+// stage("Retrieve Code Coverage Data")
+// {
+//     node{
+//         // Retrieve code coverage data
+//         string sources="${ISPW_Application}\\MF_Source"
+//         def ccproperties   = 'cc.sources=' + sources + 
+//         '\rcc.repos=' + CC_repository + 
+//         '\rcc.system=' + TTT_Project + 
+//         '\rcc.test=' + BUILD_DISPLAY_NAME + 
+//         '\rcc.ddio.overrides='
+//         step([$class: 'CodeCoverageBuilder',
+//         analysisProperties: ccproperties,
+//             analysisPropertiesPath: '',
+//             connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+//             credentialsId: Jenkins_Id])
+//     }
+// }
 
-stage("SonarQube Analysis") 
-{
-    node{
-        // Requires SonarQube Scanner 2.8+
-        def scannerHome = tool 'scanner';
-        withSonarQubeEnv('localhost') 
-        {
-            // Run SonarQube Scanner 
-            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
-            def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
-            def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
-            def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
-            def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
-            bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
-        }
-    }
-}
-stage("Check Quality Gate")
-{
-    node{ 
-        timeout(time: 4, unit: 'MINUTES') {
-            // Wait for webhook call back from SonarQube
-            def qg = waitForQualityGate()
-            if (qg.status != 'OK')
-            {
-                echo "Pipeline aborted due to quality gate failure: ${qg.status}"
-                def assignment = "${ISPW_Container}"
-                echo "Assignment that is being regressed is: "
-                echo assignment
-                error "Exiting Pipeline"
-                // If the quality gate is anything other than Green, regress the promoted code
-               // Define variables to be used to call ISPW
-            //    def ces
-            //    def container
-            //    def ces          = "${Jenkins_CES}"
-            //    String ispwRequestBdy = /assignmentId=${ISPW_Container}
-            //       level=${ISPW_Stg_Level} 
-            //       runtimeConfiguration=${ISPW_RuntimeConfig} 
-            //       events.name=Completed events.body=Regressed
-            //       events.httpHeaders=Jenkins-Crumb:no-crumb
-            //       events.credentials=admin:library/
+// stage("SonarQube Analysis") 
+// {
+//     node{
+//         // Requires SonarQube Scanner 2.8+
+//         def scannerHome = tool 'scanner';
+//         withSonarQubeEnv('localhost') 
+//         {
+//             // Run SonarQube Scanner 
+//             def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
+//             def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
+//             def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
+//             def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
+//             def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
+//             bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+//         }
+//     }
+// }
+// stage("Check Quality Gate")
+// {
+//     node{ 
+//         timeout(time: 4, unit: 'MINUTES') {
+//             // Wait for webhook call back from SonarQube
+//             def qg = waitForQualityGate()
+//             if (qg.status != 'OK')
+//             {
+//                 echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+//                 def assignment = "${ISPW_Container}"
+//                 echo "Assignment that is being regressed is: "
+//                 echo assignment
+//                 error "Exiting Pipeline"
+//                 // If the quality gate is anything other than Green, regress the promoted code
+//                // Define variables to be used to call ISPW
+//             //    def ces
+//             //    def container
+//             //    def ces          = "${Jenkins_CES}"
+//             //    String ispwRequestBdy = /assignmentId=${ISPW_Container}
+//             //       level=${ISPW_Stg_Level} 
+//             //       runtimeConfiguration=${ISPW_RuntimeConfig} 
+//             //       events.name=Completed events.body=Regressed
+//             //       events.httpHeaders=Jenkins-Crumb:no-crumb
+//             //       events.credentials=admin:library/
 
-            //    // Call ISPW Operation
-            //    ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
-            //    credentialsId: ces,
-            //    ispwAction: 'RegressAssignment',
-            //    ispwRequestBody: ispwRequestBdy
+//             //    // Call ISPW Operation
+//             //    ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
+//             //    credentialsId: ces,
+//             //    ispwAction: 'RegressAssignment',
+//             //    ispwRequestBody: ispwRequestBdy
                 
-            //     error "Exiting Pipeline"
-            }
-            else{
-                emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
-                subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
-                to: 'ed.gannaway@compuware.com'
+//             //     error "Exiting Pipeline"
+//             }
+//             else{
+//                 emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
+//                 subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
+//                 to: 'ed.gannaway@compuware.com'
                     
-                echo "Quality Gate status is: {${qg.status}"
-            }
-        }   
-    }
-}
+//                 echo "Quality Gate status is: {${qg.status}"
+//             }
+//         }   
+//     }
+// }
