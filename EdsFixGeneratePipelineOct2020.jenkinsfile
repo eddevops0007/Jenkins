@@ -105,16 +105,12 @@ stage("Run Total Tests")
 {
     node{
         // Run Total Test Jenkins Plugin
-        totaltestUT ccRepo:"${CC_repository}",
-            ccSystem: "${TTT_Project}",
-            ccTestId: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
-            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
-            credentialsId: "${Jenkins_Id}",
-            hlq: '',
-            jcl: "${TTT_Jcl}",
-            projectFolder: "${TTT_Project}",
-            testSuite: "${TTT_TestPackage}${TTT_PackageType}", 
-            useStubs: true
+            totaltest credentialsId: 'hdaelg0', 
+            environmentId: '5b508b8a787be73b59238d38', 
+            folderPath: '', 
+            recursive: true, 
+            selectProgramsOption: true, 
+            serverUrl: 'http://cwcc:2020'
                     
         // Process the Total Test result files into Jenkins
         junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
