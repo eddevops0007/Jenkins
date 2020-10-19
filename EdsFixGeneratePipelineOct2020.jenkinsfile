@@ -134,7 +134,7 @@ stage("Retrieve Code Coverage Data")
     // This was copied from my EdsFixGeneratePipeline
     node{
         // Retrieve code coverage data
-        string sources="${ISPW_Application}              \\MF_Source"
+        string sources="${ISPW_Application}\\MF_Source"
         def ccproperties   = 'cc.sources=' + sources + 
         '\rcc.repos=' + CC_repository + 
         '\rcc.system=' + TTT_Project + 
