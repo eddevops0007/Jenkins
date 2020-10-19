@@ -121,6 +121,25 @@ stage("Run Total Tests")
     }
 }
 
+stage("Retrieve Code Coverage Data")
+{
+    // This was copied from my EdsFixGeneratePipeline
+    node{
+        // Retrieve code coverage data
+        string sources="${ISPW_Application}              \\MF_Source"
+        def ccproperties   = 'cc.sources=' + sources + 
+        '\rcc.repos=' + CC_repository + 
+        '\rcc.system=' + TTT_Project + 
+        '\rcc.test=' + BUILD_DISPLAY_NAME + 
+        '\rcc.ddio.overrides='
+        step([$class: 'CodeCoverageBuilder',
+        analysisProperties: ccproperties,
+            analysisPropertiesPath: '',
+            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+            credentialsId: Jenkins_Id])
+    }
+}
+
 // stage("Run Total Test")
 // {
 //     node{
