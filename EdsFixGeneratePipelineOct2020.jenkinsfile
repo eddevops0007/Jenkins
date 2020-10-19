@@ -94,9 +94,8 @@ stage("Download Tests from Github")
            extensions: [], 
            submoduleCfg: [], 
            userRemoteConfigs: 
-              [[credentialsId: github_credentials, 
-              name: 'origin', 
-              url: github_url]]]
+              [
+              url: github_url]]
 
     }
 }
