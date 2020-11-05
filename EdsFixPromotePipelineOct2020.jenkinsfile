@@ -59,47 +59,6 @@ String SQ_Project         = "Eds_FIX_Promote_Pipeline_V0001" // Your SonarQube p
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
 //String XLR_User	          = "Xuser05"	// XLR Credentials
 
-stage("Download Source from ISPW")
-{
-    // Choose the folllowing from the Jenkins Snippet Generator:
-    //      checkout: Check out from version control
-    //          SCM : Choose ISPW Repository
-
-    node{
-        //Download the source
-        checkout([$class: 'IspwConfiguration', 
-        componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
-        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI
-        credentialsId: "${Jenkins_Id}",  
-        levelOption: '0',                                       //0-selected level only 1-first found and above
-        serverApplication: "${ISPW_Application}", 
-        serverConfig: "${ISPW_RuntimeConfig}", 
-        serverLevel: "${ISPW_Level}", 
-        ispwDownloadIncl: true,                                 // Download Includes (Copybooks)
-        serverStream: "${ISPW_Stream}"])
-    }
-
-} 
-
-// stage("Download Tests from Github")
-// {
-//     node{
-
-//        //Download the test from github
-//         checkout changelog: false, 
-//            poll: false, 
-//            scm: [$class: 'GitSCM', 
-//            branches: [[name: '*/master']], 
-//            doGenerateSubmoduleConfigurations: false, 
-//            extensions: [], 
-//            submoduleCfg: [], 
-//            userRemoteConfigs: 
-//               [
-//               url: github_url]]
-
-//     }
-// }
-
 stage("Downlaod Topaz Total Test from Github")
 {
       //Download the test from github
@@ -113,115 +72,18 @@ stage("Downlaod Topaz Total Test from Github")
     }
 }
 
-stage("Run Total Tests")
-{
-    node{
-        // Run Total Test Jenkins Plugin
-            totaltest credentialsId: 'hdaelg0', 
-            environmentId: '5b508b8a787be73b59238d38', 
-            folderPath: '', 
-            recursive: true, 
-            selectProgramsOption: true, 
-            serverUrl: 'http://cwcc:2020'
-                    
-        // Process the Total Test result files into Jenkins
-        junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
-    }
-}
-
-stage("Retrieve Code Coverage Data")
-{
-    // This was copied from my EdsFixGeneratePipeline
-    node{
-        // Retrieve code coverage data
-        string sources="${ISPW_Application}\\MF_Source"
-        def ccproperties   = 'cc.sources=' + sources + 
-        '\rcc.repos=' + CC_repository + 
-        '\rcc.system=' + TTT_Project + 
-        '\rcc.test=' + BUILD_DISPLAY_NAME + 
-        '\rcc.ddio.overrides='
-        step([$class: 'CodeCoverageBuilder',
-        analysisProperties: ccproperties,
-            analysisPropertiesPath: '',
-            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
-            credentialsId: Jenkins_Id])
-    }
-}
-
-stage("SonarQube Analysis") 
-{
-    node{
-        // Requires SonarQube Scanner 2.8+
-        def scannerHome = tool 'scanner';
-        withSonarQubeEnv('localhost') 
-        {
-            // Run SonarQube Scanner 
-            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml"
-            def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
-            def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
-            def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
-            def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
-            bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
-        }
-    }
-}
-stage("Check Quality Gate")
-{
-    node{ 
-        timeout(time: 4, unit: 'MINUTES') {
-            // Wait for webhook call back from SonarQube
-            def qg = waitForQualityGate()
-            if (qg.status != 'OK')
-            {
-                echo "Pipeline aborted due to quality gate failure: ${qg.status}"
-                def assignment = "${ISPW_Container}"
-                echo "Assignment that is being regressed is: "
-                echo assignment
-                error "Exiting Pipeline"
-                // If the quality gate is anything other than Green, regress the promoted code
-               // Define variables to be used to call ISPW
-            //    def ces
-            //    def container
-            //    def ces          = "${Jenkins_CES}"
-            //    String ispwRequestBdy = /assignmentId=${ISPW_Container}
-            //       level=${ISPW_Stg_Level} 
-            //       runtimeConfiguration=${ISPW_RuntimeConfig} 
-            //       events.name=Completed events.body=Regressed
-            //       events.httpHeaders=Jenkins-Crumb:no-crumb
-            //       events.credentials=admin:library/
-
-            //    // Call ISPW Operation
-            //    ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
-            //    credentialsId: ces,
-            //    ispwAction: 'RegressAssignment',
-            //    ispwRequestBody: ispwRequestBdy
-                
-            //     error "Exiting Pipeline"
-            }
-            else{
-                emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
-                subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
-                to: 'ed.gannaway@compuware.com'
-                    
-                echo "Quality Gate status is: {${qg.status}"
-            }
-        }   
-    }
-}
-// stage("Run Total Test")
+// stage("Run Total Tests")
 // {
 //     node{
-
-//         totaltest clearCodeCoverage: true, 
-//         collectCCRepository: 'HDAELG0.CODE.COVERAGE', 
-//         collectCCSystem: 'TEST1', 
-//         collectCCTestID: 'TEST1', 
-//         collectCodeCoverage: true, 
-//         credentialsId: 'hdaelg0', 
-//         environmentId: '5b5f2a71787be73b59238d7b', 
-//         folderPath: '', 
-//         recursive: true, 
-//         selectProgramsOption: true, 
-//         serverUrl: 'http://cwcc.compuware.com:2020'
+//         // Run Total Test Jenkins Plugin
+//             totaltest credentialsId: 'hdaelg0', 
+//             environmentId: '5b508b8a787be73b59238d38', 
+//             folderPath: '', 
+//             recursive: true, 
+//             selectProgramsOption: true, 
+//             serverUrl: 'http://cwcc:2020'
+                    
+//         // Process the Total Test result files into Jenkins
+//         junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
 //     }
 // }
