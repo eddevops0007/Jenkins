@@ -59,6 +59,28 @@ String SQ_Project         = "Eds_FIX_Promote_Pipeline_V0001" // Your SonarQube p
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
 //String XLR_User	          = "Xuser05"	// XLR Credentials
 
+stage("Download Source from ISPW")
+{
+    // Choose the folllowing from the Jenkins Snippet Generator:
+    //      checkout: Check out from version control
+    //          SCM : Choose ISPW Repository
+
+    node{
+        //Download the source
+        checkout([$class: 'IspwConfiguration', 
+        componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
+        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI
+        credentialsId: "${Jenkins_Id}",  
+        levelOption: '0',                                       //0-selected level only 1-first found and above
+        serverApplication: "${ISPW_Application}", 
+        serverConfig: "${ISPW_RuntimeConfig}", 
+        serverLevel: "${ISPW_Level}", 
+        ispwDownloadIncl: true,                                 // Download Includes (Copybooks)
+        serverStream: "${ISPW_Stream}"])
+    }
+
+} 
+
 stage("Downlaod Topaz Total Test from Github")
 {
       //Download the test from github
@@ -79,7 +101,7 @@ stage("Run Total Tests")
          totaltest credentialsId: 'hdaelg0', 
          environmentId: '5b508b8a787be73b59238d38', 
          folderPath: '',
-         jsonFile: 'changedPrograms1.json', 
+         jsonFile: 'changedPrograms.json', 
          recursive: true, 
          selectProgramsOption: true, 
          serverUrl: 'http://cwcc:2020'
