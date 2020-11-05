@@ -72,6 +72,22 @@ stage("Downlaod Topaz Total Test from Github")
     }
 }
 
+stage("Run Total Tests")
+{
+    node{
+        // Run Total Test Jenkins Plugin
+         totaltest credentialsId: 'hdaelg0', 
+         environmentId: '5b508b8a787be73b59238d38', 
+         folderPath: 'TotalTest - ISPW - Git/CWXTCOB Including Called Programs/Functional Test', 
+         jsonFile: 'changedPrograms1.json', 
+         recursive: true, 
+         selectProgramsOption: true, 
+         serverUrl: 'http://cwcc:2020'
+                    
+        // Process the Total Test result files into Jenkins
+        junit keepLongStdio: true, testResults: 'TTTFunctional/*.xml'
+    }
+}
 // stage("Run Total Tests")
 // {
 //     node{
@@ -87,3 +103,4 @@ stage("Downlaod Topaz Total Test from Github")
 //         junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
 //     }
 // }
+
