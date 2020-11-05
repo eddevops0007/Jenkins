@@ -74,7 +74,8 @@ stage("Download Source from ISPW")
         levelOption: '0',                                       //0-selected level only 1-first found and above
         serverApplication: "${ISPW_Application}", 
         serverConfig: "${ISPW_RuntimeConfig}", 
-        serverLevel: "${ISPW_Level}", 
+        serverLevel: 'EMR', 
+        //serverLevel: "${ISPW_Level}", 
         ispwDownloadIncl: true,                                 // Download Includes (Copybooks)
         serverStream: "${ISPW_Stream}"])
     }
