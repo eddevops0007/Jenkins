@@ -68,7 +68,7 @@ stage("Download Source from ISPW")
     node{
         //Download the source
         checkout([$class: 'IspwConfiguration', 
-        componentType: 'CBL, CPY',                             //Retrieve only cobol code and copybooks
+        componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
         connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI
         credentialsId: "${Jenkins_Id}",  
         levelOption: '0',                                       //0-selected level only 1-first found and above
