@@ -148,7 +148,7 @@ stage("Run Total Tests")
             totaltest credentialsId: 'hdaelg0', 
             environmentId: '5b508b8a787be73b59238d38', 
             rootp
-            folderPath: "TotalTest - ISPW - Git/CWXTCOB Including Called Programs/Functional Test/Scenarios/CWXTCOB.context", 
+            folderPath: '', 
             recursive: true, 
             selectProgramsOption: true, 
             serverUrl: 'http://cwcc:2020'
