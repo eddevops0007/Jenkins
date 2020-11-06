@@ -91,7 +91,7 @@ import hudson.model.*
 
 stage("Clear out the workspace")
     {
-        dir("./")
+        dir('./')
         {
             deleteDir()
         }
