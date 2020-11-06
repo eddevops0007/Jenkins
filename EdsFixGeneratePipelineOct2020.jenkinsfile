@@ -87,6 +87,8 @@ String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // Your SonarQube pro
 //         }
 //     }
 
+import hudson.model.*
+
 stage("Clear out the workspace")
     {
         dir("./")
