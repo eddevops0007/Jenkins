@@ -59,6 +59,18 @@ String SQ_Project         = "Eds_FIX_Promote_Pipeline_V0001" // Your SonarQube p
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
 //String XLR_User	          = "Xuser05"	// XLR Credentials
 
+import hudson.model.*
+
+stage("Clear out the workspace")
+    {
+       node{
+        dir('./')
+        {
+            deleteDir()
+        }
+       }
+    }
+    
 stage("Download Source from ISPW")
 {
     // Choose the folllowing from the Jenkins Snippet Generator:
