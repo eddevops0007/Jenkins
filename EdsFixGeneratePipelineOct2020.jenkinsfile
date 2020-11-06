@@ -163,7 +163,7 @@ stage("Run Total Tests")
     node{
         // Run Total Test Jenkins Plugin
             totaltest credentialsId: 'hdaelg0', 
-        //    environmentId: '5b508b8a787be73b59238d38',  removed 11/06/2020
+            environmentId: '5b508b8a787be73b59238d38',
             folderPath: '', 
             jsonFile: 'changedPrograms.json',
             recursive: true, 
