@@ -135,9 +135,9 @@ stage("Downlaod Topaz Total Test from Github")
         checkout([$class: 'GitSCM', 
         branches: [[name: '*/master']], 
         doGenerateSubmoduleConfigurations: false, 
-        extensions: [], 
+        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git"]],
         submoduleCfg: [], 
-        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git/TopazForTotalTest']]])
+        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]])
     }
 }
 
