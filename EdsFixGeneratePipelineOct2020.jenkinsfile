@@ -91,10 +91,12 @@ import hudson.model.*
 
 stage("Clear out the workspace")
     {
+       node{
         dir('./')
         {
             deleteDir()
         }
+       }
     }
 
 stage("Download Source from ISPW")
