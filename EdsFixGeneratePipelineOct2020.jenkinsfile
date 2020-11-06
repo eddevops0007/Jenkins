@@ -77,13 +77,13 @@ String SQ_Project         = "Eds_FIX_Generate_Pipeline_V2" // Your SonarQube pro
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
 //String XLR_User	          = "Xuser05"	// XLR Credentials
 
-stage("Clear out the workspace")
-    {
-        dir("./")
-        {
-            deleteDir()
-        }
-    }
+// stage("Clear out the workspace")
+//     {
+//         dir("./")
+//         {
+//             deleteDir()
+//         }
+//     }
 
 stage("Download Source from ISPW")
 {
