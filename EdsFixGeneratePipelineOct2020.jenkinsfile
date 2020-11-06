@@ -47,7 +47,8 @@ String CES_Token         = "8ade625f-07a2-4be6-a9f8-0653c5969d07"   // Ed's CES 
 // Github specifications
 String github_credentials = "SharkWorks1_Github" // ID that was created in Jenkins containing Ed's github ID/PW
 //String github_url         = "https://github.com/SharkWorks1/EdsFixPipeline.git" // The github URL where your TTT test is stored Old 07/27/2020
-String github_url         = "https://github.com/eddevops0007/TopazForTotalTest.git" // The github URL where your TTT test is stored
+//String github_url         = "https://github.com/eddevops0007/TopazForTotalTest.git" // The github URL where your TTT test is stored Old 11/06/2020
+String github_url         = "https://github.com/eddevops0007/TTT.git" // The github URL where your TTT test is stored
 
 // ISPW Levels and container to be used by the promote/deploy/generate/regress operations
 String ISPW_ContainerType = "assignments"   // Valid values are assignments or releases
@@ -136,9 +137,11 @@ stage("Downlaod Topaz Total Test from Github")
         branches: [[name: '*/master']], 
         doGenerateSubmoduleConfigurations: false, 
 //        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git"]],
-        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git/TotalTest - ISPW - Git/Functional Test"]],
+//        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git/TotalTest - ISPW - Git/Functional Test"]], Old 11/06/2020
+        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
         submoduleCfg: [], 
-        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]])
+//        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]]) Old 11/06/2020
+        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TTT.git']]])
     }
 }
 
