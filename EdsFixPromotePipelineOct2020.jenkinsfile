@@ -125,7 +125,7 @@ stage("Run Total Tests")
          serverUrl: 'http://cwcc:2020'
                     
         // Process the Total Test result files into Jenkins
-        junit keepLongStdio: true, testResults: 'TTTFunctional/*.xml'
+        // junit keepLongStdio: true, testResults: 'TTTFunctional/*.xml'  Old 11/06/2020
     }
 }
 // stage("Run Total Tests")
