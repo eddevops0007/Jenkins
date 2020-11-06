@@ -128,8 +128,8 @@ stage("Download Source from ISPW")
 
 stage("Downlaod Topaz Total Test from Github")
 {
-    def Git_Repo_URL = "${Git_URL}"
-    echo "Git Repo URL is: " Git_Repo_URL
+//    def Git_Repo_URL = "${Git_URL}"
+//    echo "Git Repo URL is: " Git_Repo_URL
       //Download the test from github
     node{
         checkout([$class: 'GitSCM', 
@@ -137,7 +137,7 @@ stage("Downlaod Topaz Total Test from Github")
         doGenerateSubmoduleConfigurations: false, 
         extensions: [], 
         submoduleCfg: [], 
-        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]])
+        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git/TopazForTotalTest']]])
     }
 }
 
