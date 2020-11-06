@@ -6,6 +6,19 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonOutput
 import java.net.URL
 
+// Initialization
+// The example application uses three parallel paths (DEV1, DEV2, DEV3). In order to use the correct STEPLIB concatenation in the Topaz for Total Test runner.jcl there are three versions of the JCL file in each Topaz for Total Test project used. To determine the correct JCL file to use, the script determines the current path from the ISPW level being passed to the pipeline. Using the path number, the name for the runner JCL to be used is being built and the next level in the path being determined.
+def PathNum              = ISPW_Src_Level.charAt(ISPW_Src_Level.length() - 1)
+def TTT_Jcl              = "Runner_PATH" + PathNum + ".jcl"
+def ISPW_Target_Level    = "QA" + PathNum
+def mailRecipient        = mailRecipientMap[(ISPW_Owner.toUpperCase())]
+
+echo "The ISPW Path Number is: " PathNum
+echo "The Total Test Runner JCL is: " TTT_Jcl
+echo "The ISPW Target Level is: " ISPW_Target_Level
+echo "The email address of the owner of the promotion set from the map of mail recipients is: " mailRecipient
+   
+
 echo "This Build is EdsFixGeneratePipelineOct2020 Version 01.00.0000"
 echo "Date it was created: Oct 19, 2020"
 echo "Date it was last updated: Oct 19, 2020"
@@ -16,6 +29,11 @@ echo "The ISPW Level being used is: ${ISPW_Level}"
 echo "The ISPW SetID being used is: ${ISPW_SetId}"
 echo "The ISPW Release being used is: ${ISPW_Release}"
 echo "The ISPW Event being used is: ${ISPW_Event}"
+
+echo "The ISPW Level the promote has been started from is: ${ISPW_Src_Level}"
+echo "The ISPW Assignment is:  ${ISPW_Assignment}"
+echo "The ISPW ISPW Container Type (0. - assignment, 1. - release, 2. - set) is: ${ISPW_Container_Type}"
+echo "The ISPW Owner UserID is: ${ISPW_Owner}"
 
 //Compuware Envirnoment to connect
 String HCI_Connection     = "cwcc:16196"
@@ -58,6 +76,14 @@ String SQ_Project         = "Eds_FIX_Generate_Pipeline_V2" // Your SonarQube pro
 // XL Release values
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
 //String XLR_User	          = "Xuser05"	// XLR Credentials
+
+stage("Clear out the workspace")
+    {
+        dir("./")
+        {
+            deleteDir()
+        }
+    }
 
 stage("Download Source from ISPW")
 {
@@ -102,6 +128,8 @@ stage("Download Source from ISPW")
 
 stage("Downlaod Topaz Total Test from Github")
 {
+    def Git_Repo_URL = "${Git_URL}"
+    echo "Git Repo URL is: " Git_Repo_URL
       //Download the test from github
     node{
         checkout([$class: 'GitSCM', 
