@@ -62,7 +62,8 @@ String ISPW_RuntimeConfig = "ISPW"          // ISPW or ISPT
 
 // Directory for tests that are downloaded to the jenkins workspace
 //String TTT_Project        = "EdsFixPipeline"  // The name of your TTT project  Old 07/27/2020
-String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project
+//String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project Old 07/27/2020
+String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
 
 // Total Test JCL and Scenario/Testsuite used in CI process
 String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
@@ -72,7 +73,7 @@ String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
 String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
 
 // SonarQube ID used for both project key and project name
-String SQ_Project         = "Eds_FIX_Generate_Pipeline_V2" // Your SonarQube project name
+String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // Your SonarQube project name
 
 // XL Release values
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
