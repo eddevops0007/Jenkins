@@ -87,6 +87,14 @@ String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // Your SonarQube pro
 //         }
 //     }
 
+stage("Clear out the workspace")
+    {
+        dir("./")
+        {
+            deleteDir()
+        }
+    }
+
 stage("Download Source from ISPW")
 {
     // Choose the folllowing from the Jenkins Snippet Generator:
