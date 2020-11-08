@@ -156,10 +156,20 @@ stage("Run Total Tests")
             jsonFile: 'changedPrograms.json',
             recursive: true, 
             selectProgramsOption: true, 
-            serverUrl: 'http://cwcc:2020'
+            serverUrl: 'http://cwcc:2020',
+            // CodeCoverage statements:
+            collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+            collectCCSystem: 'Mysystemid', 
+            collectCCTestID: 'mytestid', 
+            collectCodeCoverage: true
                     
         // Process the Total Test result files into Jenkins
            junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
+
+
+    // start
+            totaltest collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', collectCCSystem: 'Mysystemid', collectCCTestID: 'mytestid', collectCodeCoverage: true, credentialsId: 'hdaelg0', environmentId: '', folderPath: '', recursive: true, selectProgramsOption: true, serverUrl: 'http://cwcc:2020'
+    // end
     }
 }
 
@@ -170,9 +180,11 @@ stage("Retrieve Code Coverage Data")
         // Retrieve code coverage data
         string sources="${ISPW_Application}\\MF_Source"
         def ccproperties   = 'cc.sources=' + sources + 
-        '\rcc.repos=' + CC_repository + 
-        '\rcc.system=' + TTT_Project + 
-        '\rcc.test=' + BUILD_DISPLAY_NAME + 
+        //'\rcc.repos=' + CC_repository + 
+        //'\rcc.system=' + TTT_Project + 
+        //'\rcc.test=' + BUILD_DISPLAY_NAME + 
+        '\rcc.system=' + Mysystemid + 
+        '\rcc.test=' + mytestid + 
         '\rcc.ddio.overrides='
         step([$class: 'CodeCoverageBuilder',
         analysisProperties: ccproperties,
