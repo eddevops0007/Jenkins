@@ -67,13 +67,19 @@ String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
 
 // Total Test JCL and Scenario/Testsuite used in CI process
 String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
+echo "TTT_TestPackage - The input file to SonarQube is: ${TTT_TestPackage}"
 String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT 
+echo "TTT_Sonar - The input file to SonarQube is: ${TTT_Sonar}"
 String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenario
+echo "TTT_PackageType - The suffix of your TTT Scenario is: ${TTT_PackageType}"
 String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
+echo "TTT_Jcl - The name of the JCL file is: ${TTT_Jcl}"
 String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
+echo "CC_repository - The DSN of your code coverage repository is ${CC_repository}"
 
 // SonarQube ID used for both project key and project name
-String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // Your SonarQube project name
+String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // The SonarQube project name
+echo "SQ_Project - The SonarQube project name is: ${SQ_Project}"
 
 // XL Release values
 //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
@@ -120,25 +126,6 @@ stage("Download Source from ISPW")
     }
 
 } 
-
-// stage("Download Tests from Github")
-// {
-//     node{
-
-//        //Download the test from github
-//         checkout changelog: false, 
-//            poll: false, 
-//            scm: [$class: 'GitSCM', 
-//            branches: [[name: '*/master']], 
-//            doGenerateSubmoduleConfigurations: false, 
-//            extensions: [], 
-//            submoduleCfg: [], 
-//            userRemoteConfigs: 
-//               [
-//               url: github_url]]
-
-//     }
-// }
 
 stage("Downlaod Topaz Total Test from Github")
 {
@@ -199,6 +186,14 @@ stage("SonarQube Analysis")
 {
     node{
         // Requires SonarQube Scanner 2.8+
+        echo "TTT_Project - ${TTT_Project}"
+        echo "TTT_Sonar - ${TTT_Sonar}"
+        echo "ISPW_Application - ${ISPW_Application}"
+        echo "SQ_Tests - ${SQ_Tests}"
+        echo "SQ_ProjectKey - ${SQ_ProjectKey}"
+        echo "SQ_Source - ${SQ_Source}"
+        echo "SQ_Copybook - ${SQ_Copybook}"
+        echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
         def scannerHome = tool 'scanner';
         withSonarQubeEnv('localhost') 
         {
