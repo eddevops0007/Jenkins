@@ -157,32 +157,53 @@ stage("Downlaod Topaz Total Test from Github")
     }
 }
 
-stage("Run Total Tests")
+// stage("Run Total Tests")
+// {
+//     node{
+//         // Note this is a working Section using the Functional Test Plugin
+//         // Run Total Test Jenkins Plugin
+//         println "*************************************************************************************************************************************************"
+//         println "*   The start of:           "
+//         println "*                 Run Total Tests Stage          "
+//         println "*************************************************************************************************************************************************" 
+//             totaltest credentialsId: 'hdaelg0', 
+//             environmentId: '5b508b8a787be73b59238d38',
+//             folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Scenarios/',  // use this to point to Unit or Functional Test Folder
+//             jsonFile: 'changedPrograms.json',
+//             recursive: true, 
+//             selectProgramsOption: true, 
+//             serverUrl: 'http://cwcc:2020',
+//             // CodeCoverage statements:
+//             collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+//             collectCCSystem: 'Mysystemid', 
+//             collectCCTestID: 'Mytestid', 
+//             collectCodeCoverage: true
+                    
+//         // Process the Total Test result files into Jenkins
+//             junit allowEmptyResults:    true,
+//                 keepLongStdio:          true,
+//                 testResults:            "TTTUnit/*.xml"
+//         //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
+//     }
+// }
+
+stage("Run Total Unit Tests")
 {
     node{
         // Run Total Test Jenkins Plugin
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Run Total Tests Stage          "
-        println "*************************************************************************************************************************************************" 
-            totaltest credentialsId: 'hdaelg0', 
-            environmentId: '5b508b8a787be73b59238d38',
-            folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Scenarios/',  // use this to point to Unit or Functional Test Folder
-            jsonFile: 'changedPrograms.json',
-            recursive: true, 
-            selectProgramsOption: true, 
-            serverUrl: 'http://cwcc:2020',
-            // CodeCoverage statements:
-            collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
-            collectCCSystem: 'Mysystemid', 
-            collectCCTestID: 'Mytestid', 
-            collectCodeCoverage: true
+        totaltestUT ccRepo:"${CC_repository}",
+            ccSystem: "${TTT_Project}",
+            ccTestId: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
+            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+            credentialsId: "${Jenkins_Id}",
+            hlq: '',
+            jcl: "${TTT_Jcl}",
+            projectFolder: "${TTT_Project}",
+            testSuite: "${TTT_TestPackage}${TTT_PackageType}", 
+            useStubs: true
                     
         // Process the Total Test result files into Jenkins
-            junit allowEmptyResults:    true,
-                keepLongStdio:          true,
-                testResults:            "TTTUnit/*.xml"
-        //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
+        junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
     }
 }
 
@@ -198,10 +219,10 @@ stage("Retrieve Code Coverage Data")
         string sources="${ISPW_Application}\\MF_Source"
         def ccproperties   = 'cc.sources=' + sources + 
         '\rcc.repos=' + CC_repository + 
-        //'\rcc.system=' + TTT_Project + 
-        //'\rcc.test=' + BUILD_DISPLAY_NAME + 
-        '\rcc.system=Mysystemid' + 
-        '\rcc.test=Mytestid' + 
+        '\rcc.system=' + TTT_Project + 
+        '\rcc.test=' + BUILD_DISPLAY_NAME + 
+        //'\rcc.system=Mysystemid' + 
+        //'\rcc.test=Mytestid' + 
         '\rcc.ddio.overrides='
         step([$class: 'CodeCoverageBuilder',
         analysisProperties: ccproperties,
