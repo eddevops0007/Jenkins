@@ -172,7 +172,7 @@ stage("Run Total Tests")
             serverUrl: 'http://cwcc:2020'
                     
         // Process the Total Test result files into Jenkins
-       //  junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'   // temp removed on 11-08-2020
+           junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
     }
 }
 
