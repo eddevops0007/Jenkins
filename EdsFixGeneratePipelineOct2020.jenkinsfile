@@ -164,7 +164,8 @@ stage("Run Total Tests")
         // Run Total Test Jenkins Plugin
             totaltest credentialsId: 'hdaelg0', 
             environmentId: '5b508b8a787be73b59238d38',
-            folderPath: '',   // use this to point to unit or functional test folder
+        //    folderPath: '',   // use this to point to unit or functional test folder
+        folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/TTT_Unit_Tests/Scenarios/',
             jsonFile: 'changedPrograms.json',
             recursive: true, 
             selectProgramsOption: true, 
