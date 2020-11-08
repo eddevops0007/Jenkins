@@ -232,6 +232,8 @@ stage("SonarQube Analysis")
                 " -Dsonar.tests=" + TTT_Unit_Tests +
                 " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
                 " -Dsonar.sourceEncoding=UTF-8" +
+                " -Dsonar.analysis.mode=" + 
+                " -Dsonar."
                 " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
         }
     }
