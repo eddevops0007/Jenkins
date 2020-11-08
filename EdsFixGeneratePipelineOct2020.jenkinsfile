@@ -226,14 +226,12 @@ stage("SonarQube Analysis")
                 " -Dsonar.projectKey=${SQ_ProjectKey}" +
                 " -Dsonar.projectName=${SQ_ProjectKey}" +
                 " -Dsonar.projectVersion=11" +
-                " -Dsonar.sources=${ISPW_Application}\\${MF_Source}" +
-                " -Dsonar.cobol.copy.directories=${ISPW_Application}\\${MF_Source}" +
+                " -Dsonar.sources=${ISPW_Application}\\MF_Source" +
+                " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
                 " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
                 " -Dsonar.tests=" + TTT_Unit_Tests +
                 " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
                 " -Dsonar.sourceEncoding=UTF-8" +
-                " -Dsonar.analysis.mode=" + 
-                " -Dsonar."
                 " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
         }
     }
