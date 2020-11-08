@@ -189,11 +189,7 @@ stage("SonarQube Analysis")
         echo "TTT_Project - ${TTT_Project}"
         echo "TTT_Sonar - ${TTT_Sonar}"
         echo "ISPW_Application - ${ISPW_Application}"
-        echo "SQ_Tests - ${SQ_Tests}"
-        echo "SQ_ProjectKey - ${SQ_ProjectKey}"
-        echo "SQ_Source - ${SQ_Source}"
-        echo "SQ_Copybook - ${SQ_Copybook}"
-        echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
+
         def scannerHome = tool 'scanner';
         withSonarQubeEnv('localhost') 
         {
@@ -203,6 +199,13 @@ stage("SonarQube Analysis")
             def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
             def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
             def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
+
+            echo "SQ_Tests - ${SQ_Tests}"
+            echo "SQ_ProjectKey - ${SQ_ProjectKey}"
+            echo "SQ_Source - ${SQ_Source}"
+            echo "SQ_Copybook - ${SQ_Copybook}"
+            echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
+
             bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
         }
     }
