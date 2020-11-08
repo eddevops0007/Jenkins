@@ -196,10 +196,19 @@ stage("SonarQube Analysis")
         echo "TTT_Sonar - ${TTT_Sonar}"
         echo "ISPW_Application - ${ISPW_Application}"
 
-        def scannerHome = tool 'scanner';
-        withSonarQubeEnv('localhost') 
+        def scannerHome = tool 'scanner';  //Name of the Sonar Scanner as defined in Jenkins Manage Jenkins->Global Tools Configuration->SonarQube Scanner
+        withSonarQubeEnv('localhost')      //Name of the SonarQube server configuration in Jenkins Manage Jenkins->Configure System->SonarQube servers 
         {
             // Run SonarQube Scanner 
+            def TTTListOfResults     = findFiles(glob: 'TTTSonar/*.xml')
+            def SQ_TestResult        = ''
+
+            TTTListOfResults.each
+            {
+                def TTTResultName    = it.name   // Get the name of the Total Test results file
+                SQ_TestResult = SQ_TestResult + "TTTSonar/" + it.name +  ',' // Append the results file to the property
+            }
+
             def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml"
             def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
             def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
@@ -212,7 +221,18 @@ stage("SonarQube Analysis")
             echo "SQ_Copybook - ${SQ_Copybook}"
             echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
 
-            bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+           // bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+           bat "${scannerHome}/bin/sonar-scanner" +
+                " -Dsonar.projectKey=${SQ_ProjectKey}" +
+                " -Dsonar.projectName=${SQ_ProjectKey}" +
+                " -Dsonar.projectVersion=11" +
+                " -Dsonar.sources=${ISPW_Application}\\${MF_Source}" +
+                " -Dsonar.cobol.copy.directories=${ISPW_Application}\\${MF_Source}" +
+                " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
+                " -Dsonar.tests=" + TTT_Unit_Tests +
+                " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
+                " -Dsonar.sourceEncoding=UTF-8" +
+                " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
         }
     }
 }
