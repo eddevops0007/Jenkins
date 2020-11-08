@@ -163,7 +163,7 @@ stage("Run Total Tests")
             collectCodeCoverage: true
                     
         // Process the Total Test result files into Jenkins
-           junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
+        //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
     }
 }
 
