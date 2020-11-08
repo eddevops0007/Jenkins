@@ -98,6 +98,10 @@ import hudson.model.*
 stage("Clear out the workspace")
     {
        node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Clear out the workspace Stage          "
+        println "*************************************************************************************************************************************************" 
         dir('./')
         {
             deleteDir()
@@ -112,6 +116,10 @@ stage("Download Source from ISPW")
     //          SCM : Choose ISPW Repository
 
     node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Download Source from ISPW Stage          "
+        println "*************************************************************************************************************************************************" 
         //Download the source
         checkout([$class: 'IspwConfiguration', 
         componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
@@ -133,6 +141,10 @@ stage("Downlaod Topaz Total Test from Github")
 //    echo "Git Repo URL is: " Git_Repo_URL
       //Download the test from github
     node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Downlaod Topaz Total Test from Github Stage          "
+        println "*************************************************************************************************************************************************" 
         checkout([$class: 'GitSCM', 
         branches: [[name: '*/master']], 
         doGenerateSubmoduleConfigurations: false, 
@@ -149,6 +161,10 @@ stage("Run Total Tests")
 {
     node{
         // Run Total Test Jenkins Plugin
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Run Total Tests Stage          "
+        println "*************************************************************************************************************************************************" 
             totaltest credentialsId: 'hdaelg0', 
             environmentId: '5b508b8a787be73b59238d38',
             folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Scenarios/',  // use this to point to Unit or Functional Test Folder
@@ -174,6 +190,10 @@ stage("Retrieve Code Coverage Data")
 {
     // This was copied from my EdsFixGeneratePipeline
     node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Retrieve Code Coverage Data Stage          "
+        println "*************************************************************************************************************************************************" 
         // Retrieve code coverage data
         string sources="${ISPW_Application}\\MF_Source"
         def ccproperties   = 'cc.sources=' + sources + 
@@ -191,9 +211,14 @@ stage("Retrieve Code Coverage Data")
     }
 }
 
+
 stage("SonarQube Analysis") 
 {
     node{
+                println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 SonarQube Analysis Stage          "
+        println "*************************************************************************************************************************************************" 
         // Requires SonarQube Scanner 2.8+
         echo "TTT_Project - ${TTT_Project}"
         echo "TTT_Sonar - ${TTT_Sonar}"
@@ -242,6 +267,10 @@ stage("SonarQube Analysis")
 stage("Check Quality Gate")
 {
     node{ 
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Check Quality Gate Stage          "
+        println "*************************************************************************************************************************************************" 
         timeout(time: 4, unit: 'MINUTES') {
             // Wait for webhook call back from SonarQube
             def qg = waitForQualityGate()
