@@ -174,7 +174,7 @@ stage("Retrieve Code Coverage Data")
         // Retrieve code coverage data
         string sources="${ISPW_Application}\\MF_Source"
         def ccproperties   = 'cc.sources=' + sources + 
-        //'\rcc.repos=' + CC_repository + 
+        '\rcc.repos=' + CC_repository + 
         //'\rcc.system=' + TTT_Project + 
         //'\rcc.test=' + BUILD_DISPLAY_NAME + 
         '\rcc.system=Mysystemid' + 
