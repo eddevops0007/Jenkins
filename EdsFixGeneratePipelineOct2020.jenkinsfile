@@ -285,7 +285,7 @@ stage("SonarQube Analysis")
                 " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
                 " -Dsonar.tests=TTT_Unit_Tests" +
                 //" -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
-                " -Dsonar.testExecutionReportPaths=" + Sonar_Location +
+                " -Dsonar.testExecutionReportPaths=\"${Sonar_Location}\"" +
                 " -Dsonar.sourceEncoding=UTF-8" +
                 " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
         }
