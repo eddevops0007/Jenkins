@@ -139,7 +139,7 @@ stage("Run Total Tests")
          jsonFile: 'changedPrograms.json', 
          recursive: true, 
          selectProgramsOption: true, 
-         serverUrl: 'http://cwcc:2020'
+         serverUrl: 'http://cwcc:2020',
          // CodeCoverage statements:
         collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
         //collectCCSystem: 'Mysystemid', 
