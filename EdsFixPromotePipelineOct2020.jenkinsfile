@@ -140,7 +140,14 @@ stage("Run Total Tests")
          recursive: true, 
          selectProgramsOption: true, 
          serverUrl: 'http://cwcc:2020'
-                    
+         // CodeCoverage statements:
+        collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+        //collectCCSystem: 'Mysystemid', 
+        //collectCCTestID: 'Mytestid', 
+        collectCCSystem: "${TTT_Project}",
+        collectCCTestID: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
+        collectCodeCoverage: true
+
         // Process the Total Test result files into Jenkins
             junit allowEmptyResults:    true,
                 keepLongStdio:          true,
