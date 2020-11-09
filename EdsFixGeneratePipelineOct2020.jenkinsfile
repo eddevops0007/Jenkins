@@ -68,7 +68,8 @@ String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
 // Total Test JCL and Scenario/Testsuite used in CI process
 String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
 echo "TTT_TestPackage - The input file to SonarQube is: ${TTT_TestPackage}"
-String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT 
+//String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT  
+String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT  
 echo "TTT_Sonar - The input file to SonarQube is: ${TTT_Sonar}"
 String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenario
 echo "TTT_PackageType - The suffix of your TTT Scenario is: ${TTT_PackageType}"
@@ -260,7 +261,9 @@ stage("SonarQube Analysis")
                 SQ_TestResult = SQ_TestResult + "TTTSonar/" + it.name +  ',' // Append the results file to the property
             }
 
-            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml"
+            def Sonar_Location          = 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Output/CWXTCOB_Scenario.sonar.xml'
+            //def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml" old way
+            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=${Sonar_Location}"
             def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
             def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
             def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
@@ -281,7 +284,8 @@ stage("SonarQube Analysis")
                 " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
                 " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
                 " -Dsonar.tests=TTT_Unit_Tests" +
-                " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
+                //" -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
+                " -Dsonar.testExecutionReportPaths=" + Sonar_Location +
                 " -Dsonar.sourceEncoding=UTF-8" +
                 " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
         }
