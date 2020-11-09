@@ -66,6 +66,11 @@ import hudson.model.*
 stage("Clear out the workspace")
     {
        node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Clear out the workspace Stage          "
+        println "*************************************************************************************************************************************************" 
+ 
         dir('./')
         {
             deleteDir()
@@ -80,6 +85,10 @@ stage("Download Source from ISPW")
     //          SCM : Choose ISPW Repository
 
     node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Download Source from ISPW Stage          "
+        println "*************************************************************************************************************************************************" 
         //Download the source
         checkout([$class: 'IspwConfiguration', 
         componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
@@ -100,6 +109,10 @@ stage("Downlaod Topaz Total Test from Github")
 {
       //Download the test from github
     node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Downlaod Topaz Total Test from Github Stage          "
+        println "*************************************************************************************************************************************************" 
         checkout([$class: 'GitSCM', 
         branches: [[name: '*/master']], 
         doGenerateSubmoduleConfigurations: false, 
@@ -114,6 +127,10 @@ stage("Downlaod Topaz Total Test from Github")
 stage("Run Total Tests")
 {
     node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Run Total Tests Stage          "
+        println "*************************************************************************************************************************************************" 
         // Run Total Test Jenkins Plugin
          totaltest credentialsId: 'hdaelg0', 
          environmentId: '5b508b8a787be73b59238d38', 
@@ -125,23 +142,135 @@ stage("Run Total Tests")
          serverUrl: 'http://cwcc:2020'
                     
         // Process the Total Test result files into Jenkins
-        junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
+            junit allowEmptyResults:    true,
+                keepLongStdio:          true,
+                testResults:            "TTTUnit/*.xml"
+        //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'   
 }
 }
-// stage("Run Total Tests")
-// {
-//     node{
-//         // Run Total Test Jenkins Plugin
-//             totaltest credentialsId: 'hdaelg0', 
-//             environmentId: '5b508b8a787be73b59238d38', 
-//             folderPath: '', 
-//             recursive: true, 
-//             selectProgramsOption: true, 
-//             serverUrl: 'http://cwcc:2020'
-                    
-//         // Process the Total Test result files into Jenkins
-//         junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
-//     }
-// }
 
-//  folderPath: 'TotalTest - ISPW - Git/CWXTCOB Including Called Programs/Functional Test', 
+stage("Retrieve Code Coverage Data")
+{
+    // This was copied from my EdsFixGeneratePipeline
+    node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Retrieve Code Coverage Data Stage          "
+        println "*************************************************************************************************************************************************" 
+        // Retrieve code coverage data
+        string sources="${ISPW_Application}\\MF_Source"
+        def ccproperties   = 'cc.sources=' + sources + 
+        '\rcc.repos=' + CC_repository + 
+        '\rcc.system=' + TTT_Project + 
+        '\rcc.test=' + BUILD_DISPLAY_NAME + 
+        //'\rcc.system=Mysystemid' + 
+        //'\rcc.test=Mytestid' + 
+        '\rcc.ddio.overrides='
+        step([$class: 'CodeCoverageBuilder',
+        analysisProperties: ccproperties,
+            analysisPropertiesPath: '',
+            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+            credentialsId: Jenkins_Id])
+    }
+}
+
+
+stage("SonarQube Analysis") 
+{
+    node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 SonarQube Analysis Stage          "
+        println "*************************************************************************************************************************************************" 
+        // Requires SonarQube Scanner 2.8+
+        echo "TTT_Project - ${TTT_Project}"
+        echo "TTT_Sonar - ${TTT_Sonar}"
+        echo "ISPW_Application - ${ISPW_Application}"
+
+        def scannerHome = tool 'scanner';  //Name of the Sonar Scanner as defined in Jenkins Manage Jenkins->Global Tools Configuration->SonarQube Scanner
+        withSonarQubeEnv('localhost')      //Name of the SonarQube server configuration in Jenkins Manage Jenkins->Configure System->SonarQube servers 
+        {
+            // Run SonarQube Scanner 
+            def TTTListOfResults     = findFiles(glob: 'TTTSonar/*.xml')
+            def SQ_TestResult        = ''
+
+            TTTListOfResults.each
+            {
+                def TTTResultName    = it.name   // Get the name of the Total Test results file
+                SQ_TestResult = SQ_TestResult + "TTTSonar/" + it.name +  ',' // Append the results file to the property
+            }
+
+            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml"
+            def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
+            def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
+            def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
+            def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
+
+            echo "SQ_Tests - ${SQ_Tests}"
+            echo "SQ_ProjectKey - ${SQ_ProjectKey}"
+            echo "SQ_Source - ${SQ_Source}"
+            echo "SQ_Copybook - ${SQ_Copybook}"
+            echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
+
+           // bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+           bat "${scannerHome}/bin/sonar-scanner" +
+                " -Dsonar.projectKey=${SQ_ProjectKey}" +
+                " -Dsonar.projectName=${SQ_ProjectKey}" +
+                " -Dsonar.projectVersion=11" +
+                " -Dsonar.sources=${ISPW_Application}\\MF_Source" +
+                " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
+                " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
+                " -Dsonar.tests=TTT_Unit_Tests" +
+                " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
+                " -Dsonar.sourceEncoding=UTF-8" +
+                " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
+        }
+    }
+}
+stage("Check Quality Gate")
+{
+    node{ 
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Check Quality Gate Stage          "
+        println "*************************************************************************************************************************************************" 
+        timeout(time: 4, unit: 'MINUTES') {
+            // Wait for webhook call back from SonarQube
+            def qg = waitForQualityGate()
+            if (qg.status != 'OK')
+            {
+                echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+                def assignment = "${ISPW_Container}"
+                echo "Assignment that is being regressed is: "
+                echo assignment
+                error "Exiting Pipeline"
+            // If the quality gate is anything other than Green, regress the promoted code
+            // Define variables to be used to call ISPW
+            //    def ces
+            //    def container
+            //    def ces          = "${Jenkins_CES}"
+            //    String ispwRequestBdy = /assignmentId=${ISPW_Container}
+            //       level=${ISPW_Stg_Level} 
+            //       runtimeConfiguration=${ISPW_RuntimeConfig} 
+            //       events.name=Completed events.body=Regressed
+            //       events.httpHeaders=Jenkins-Crumb:no-crumb
+            //       events.credentials=admin:library/
+
+            //    // Call ISPW Operation
+            //    ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
+            //    credentialsId: ces,
+            //    ispwAction: 'RegressAssignment',
+            //    ispwRequestBody: ispwRequestBdy
+                
+            //     error "Exiting Pipeline"
+            }
+            else{
+                emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
+                subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
+                to: 'ed.gannaway@compuware.com'
+                    
+                echo "Quality Gate status is: {${qg.status}"
+            }
+        }   
+    }
+}
