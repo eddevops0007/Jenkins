@@ -266,8 +266,8 @@ stage("SonarQube Analysis")
                 SQ_TestResult = SQ_TestResult + "TTTSonar/" + it.name +  ',' // Append the results file to the property
             }
 
- //           def Sonar_Location          = 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Output/generated.cli.suite.sonar.xml'
-            def Sonar_Location          = 'Ed_Can_Delete_Two/Ed_Can_Delete_Two/Tests/Output/generated.cli.suite.sonar.xml'
+            def Sonar_Location          = 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Output/generated.cli.suite.sonar.xml'
+ // 01/12/2021            def Sonar_Location          = 'Ed_Can_Delete_Two/Ed_Can_Delete_Two/Tests/Output/generated.cli.suite.sonar.xml'
             // def Sonar_Location          = 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Output/CWXTCOB_Scenario.sonar.xml'  old way used in Oct 2020
             //def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml" old way
             def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=${Sonar_Location}"
