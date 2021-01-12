@@ -1,0 +1,348 @@
+#!/usr/bin/env groovy
+import hudson.model.*
+import hudson.EnvVars
+import groovy.json.JsonSlurperClassic
+import groovy.json.JsonBuilder
+import groovy.json.JsonOutput
+import java.net.URL
+
+// Initialization
+// The example application uses three parallel paths (DEV1, DEV2, DEV3). In order to use the correct STEPLIB concatenation in the Topaz for Total Test runner.jcl there are three versions of the JCL file in each Topaz for Total Test project used. To determine the correct JCL file to use, the script determines the current path from the ISPW level being passed to the pipeline. Using the path number, the name for the runner JCL to be used is being built and the next level in the path being determined.
+//def PathNum              = ISPW_Src_Level.charAt(ISPW_Src_Level.length() - 1)
+//def TTT_Jcl1              = "Runner_PATH" + PathNum + ".jcl"
+//def ISPW_Target_Level    = "QA" + PathNum
+//def mailRecipient        = mailRecipientMap[(ISPW_Owner.toUpperCase())]
+
+//echo "The ISPW Path Number is: " PathNum
+//echo "The Total Test Runner JCL is: " TTT_Jcl1
+//echo "The ISPW Target Level is: " ISPW_Target_Level
+//echo "The email address of the owner of the promotion set from the map of mail recipients is: " mailRecipient
+   
+
+echo "This Build is EdsFixGeneratePipelineOct2020 Version 01.00.0000"
+echo "Date it was created: Oct 19, 2020"
+echo "Date it was last updated: Oct 19, 2020"
+echo "The ISPW Stream being used is: ${ISPW_Stream}"
+echo "The ISPW Application being used is: ${ISPW_Application}"
+echo "The ISPW Container being used is: ${ISPW_Container}"
+echo "The ISPW Level being used is: ${ISPW_Level}"
+echo "The ISPW SetID being used is: ${ISPW_SetId}"
+echo "The ISPW Release being used is: ${ISPW_Release}"
+echo "The ISPW Event being used is: ${ISPW_Event}"
+
+echo "The ISPW Level the promote has been started from is: ${ISPW_Src_Level}"
+echo "The ISPW Assignment is:  ${ISPW_Assignment}"
+echo "The ISPW ISPW Container Type (0. - assignment, 1. - release, 2. - set) is: ${ISPW_Container_Type}"
+echo "The ISPW Owner UserID is: ${ISPW_Owner}"
+
+//Compuware Envirnoment to connect
+String HCI_Connection     = "cwcc:16196"
+String CES_Connection     = "cwcc:2020"       
+
+// Jenkins credential ID and CES Personal Access token to be used for mainframe access
+String Jenkins_Id        = "hdaelg0"      // ID that was created in Jenkins containing mainframe CWCC ID/PW
+String Jenkins_CES       = "hdaelg0ces"   // A secret text credential containing your CES token
+String CES_Token         = "8ade625f-07a2-4be6-a9f8-0653c5969d07"   // Ed's CES Token using hdaelg0
+
+// Github specifications
+String github_credentials = "SharkWorks1_Github" // ID that was created in Jenkins containing Ed's github ID/PW
+//String github_url         = "https://github.com/SharkWorks1/EdsFixPipeline.git" // The github URL where your TTT test is stored Old 07/27/2020
+//String github_url         = "https://github.com/eddevops0007/TopazForTotalTest.git" // The github URL where your TTT test is stored Old 11/06/2020
+String github_url         = "https://github.com/eddevops0007/TTT.git" // The github URL where your TTT test is stored
+
+// ISPW Levels and container to be used by the promote/deploy/generate/regress operations
+String ISPW_ContainerType = "assignments"   // Valid values are assignments or releases
+// String ISPW_Container     = "BAW1000040"    // The container where your items are in ISPW
+// String ISPW_Stream        = "FTSDEMO"       // Your ISPW stream
+// String ISPW_Application   = "BAW1"          // Your ISPW application
+String ISPW_RuntimeConfig = "ISPW"          // ISPW or ISPT
+//String ISPW_Dev_Level     = "DEV1"          // The name of your DEV level
+//String ISPW_Stg_Level     = "QA1"           // The name of the next level up from your DEV level
+//String ISPW_Release       = "SKO19  "       // The ISPW release ID used in XLR
+
+// Directory for tests that are downloaded to the jenkins workspace
+//String TTT_Project        = "EdsFixPipeline"  // The name of your TTT project  Old 07/27/2020
+//String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project Old 07/27/2020
+//String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
+String TTT_Project        = "Tests"  // The name of your TTT project
+
+// Total Test JCL and Scenario/Testsuite used in CI process
+String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
+echo "TTT_TestPackage - The input file to SonarQube is: ${TTT_TestPackage}"
+//String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT  
+String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT  
+echo "TTT_Sonar - The input file to SonarQube is: ${TTT_Sonar}"
+String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenario
+echo "TTT_PackageType - The suffix of your TTT Scenario is: ${TTT_PackageType}"
+String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
+echo "TTT_Jcl - The name of the JCL file is: ${TTT_Jcl}"
+String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
+echo "CC_repository - The DSN of your code coverage repository is ${CC_repository}"
+
+// SonarQube ID used for both project key and project name
+String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // The SonarQube project name
+echo "SQ_Project - The SonarQube project name is: ${SQ_Project}"
+
+// XL Release values
+//String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
+//String XLR_User	          = "Xuser05"	// XLR Credentials
+
+// stage("Clear out the workspace")
+//     {
+//         dir("./")
+//         {
+//             deleteDir()
+//         }
+//     }
+
+import hudson.model.*
+
+stage("Clear out the workspace")
+    {
+       node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Clear out the workspace Stage          "
+        println "*************************************************************************************************************************************************" 
+        dir('./')
+        {
+            deleteDir()
+        }
+       }
+    }
+
+stage("Download Source from ISPW")
+{
+    // Choose the folllowing from the Jenkins Snippet Generator:
+    //      checkout: Check out from version control
+    //          SCM : Choose ISPW Repository
+
+    node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Download Source from ISPW Stage          "
+        println "*************************************************************************************************************************************************" 
+        //Download the source
+        checkout([$class: 'IspwConfiguration', 
+        componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
+        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI
+        credentialsId: "${Jenkins_Id}",  
+        levelOption: '0',                                       //0-selected level only 1-first found and above
+        serverApplication: "${ISPW_Application}", 
+        serverConfig: "${ISPW_RuntimeConfig}", 
+        serverLevel: "${ISPW_Level}", 
+        ispwDownloadIncl: true,                                 // Download Includes (Copybooks)
+        serverStream: "${ISPW_Stream}"])
+    }
+
+} 
+
+stage("Downlaod Topaz Total Test from Github")
+{
+//    def Git_Repo_URL = "${Git_URL}"
+//    echo "Git Repo URL is: " Git_Repo_URL
+      //Download the test from github
+    node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Downlaod Topaz Total Test from Github Stage          "
+        println "*************************************************************************************************************************************************" 
+        checkout([$class: 'GitSCM', 
+        branches: [[name: '*/master']], 
+        doGenerateSubmoduleConfigurations: false, 
+//        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git"]],
+//        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git/TotalTest - ISPW - Git/Functional Test"]], Old 11/06/2020
+//        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
+        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "Ed_Can_Delete_Two"]],
+        submoduleCfg: [], 
+//        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]]) Old 11/06/2020
+        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TTT.git']]])
+    }
+}
+
+stage("Run Total Tests")
+{
+    node{
+        // Note this is a working Section using the Functional Test Plugin
+        // Run Total Test Jenkins Plugin
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Run Total Tests Stage          "
+        println "*************************************************************************************************************************************************" 
+            totaltest credentialsId: 'hdaelg0', 
+            environmentId: '5b508b8a787be73b59238d38',
+ //           folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Scenarios/',  // use this to point to Unit or Functional Test Folder
+            folderPath: 'Ed_Can_Delete_Two/Ed_Can_Delete_Two/Tests/Scenarios/',  // use this to point to Unit or Functional Test Folder
+            jsonFile: 'changedPrograms.json',
+            recursive: true, 
+            selectProgramsOption: true, 
+            serverUrl: 'http://cwcc:2020',
+            // Added the following line for Security that was added in Janary 2021 on CWCC
+            serverCredentialsId: 'hdaelg0', 
+            // CodeCoverage statements:
+            collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+            //collectCCSystem: 'Mysystemid', 
+            //collectCCTestID: 'Mytestid', 
+            collectCCSystem: "${TTT_Project}",
+            collectCCTestID: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
+            collectCodeCoverage: true
+                    
+        // Process the Total Test result files into Jenkins
+            junit allowEmptyResults:    true,
+                keepLongStdio:          true,
+                testResults:            "TTTUnit/*.xml"
+        //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
+    }
+}
+
+// stage("Run Total Unit Tests")
+// {
+//     node{
+//         // Run Total Test Jenkins Plugin
+//         totaltestUT ccRepo:"${CC_repository}",
+//             ccSystem: "${TTT_Project}",
+//             ccTestId: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
+//             connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+//             credentialsId: "${Jenkins_Id}",
+//             hlq: '',
+//             jcl: "${TTT_Jcl}",
+//             projectFolder: "${TTT_Project}",
+//             testSuite: "${TTT_TestPackage}${TTT_PackageType}", 
+//             useStubs: true
+                    
+//         // Process the Total Test result files into Jenkins
+//         junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
+//     }
+// }
+
+stage("Retrieve Code Coverage Data")
+{
+    // This was copied from my EdsFixGeneratePipeline
+    node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Retrieve Code Coverage Data Stage          "
+        println "*************************************************************************************************************************************************" 
+        // Retrieve code coverage data
+        string sources="${ISPW_Application}\\MF_Source"
+        def ccproperties   = 'cc.sources=' + sources + 
+        '\rcc.repos=' + CC_repository + 
+        '\rcc.system=' + TTT_Project + 
+        '\rcc.test=' + BUILD_DISPLAY_NAME + 
+        //'\rcc.system=Mysystemid' + 
+        //'\rcc.test=Mytestid' + 
+        '\rcc.ddio.overrides='
+        step([$class: 'CodeCoverageBuilder',
+        analysisProperties: ccproperties,
+            analysisPropertiesPath: '',
+            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+            credentialsId: Jenkins_Id])
+    }
+}
+
+
+stage("SonarQube Analysis") 
+{
+    node{
+                println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 SonarQube Analysis Stage          "
+        println "*************************************************************************************************************************************************" 
+        // Requires SonarQube Scanner 2.8+
+        echo "TTT_Project - ${TTT_Project}"
+        echo "TTT_Sonar - ${TTT_Sonar}"
+        echo "ISPW_Application - ${ISPW_Application}"
+
+        def scannerHome = tool 'scanner';  //Name of the Sonar Scanner as defined in Jenkins Manage Jenkins->Global Tools Configuration->SonarQube Scanner
+        withSonarQubeEnv('localhost')      //Name of the SonarQube server configuration in Jenkins Manage Jenkins->Configure System->SonarQube servers 
+        {
+            // Run SonarQube Scanner 
+            def TTTListOfResults     = findFiles(glob: 'TTTSonar/*.xml')
+            def SQ_TestResult        = ''
+
+            TTTListOfResults.each
+            {
+                def TTTResultName    = it.name   // Get the name of the Total Test results file
+                SQ_TestResult = SQ_TestResult + "TTTSonar/" + it.name +  ',' // Append the results file to the property
+            }
+
+ //           def Sonar_Location          = 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Output/generated.cli.suite.sonar.xml'
+            def Sonar_Location          = 'Ed_Can_Delete_Two/Ed_Can_Delete_Two/Tests/Output/generated.cli.suite.sonar.xml'
+            // def Sonar_Location          = 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Output/CWXTCOB_Scenario.sonar.xml'  old way used in Oct 2020
+            //def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml" old way
+            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=${Sonar_Location}"
+            def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
+            def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
+            def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
+            def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
+
+            echo "SQ_Tests - ${SQ_Tests}"
+            echo "SQ_ProjectKey - ${SQ_ProjectKey}"
+            echo "SQ_Source - ${SQ_Source}"
+            echo "SQ_Copybook - ${SQ_Copybook}"
+            echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
+
+           // bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+           bat "${scannerHome}/bin/sonar-scanner" +
+                " -Dsonar.projectKey=${SQ_ProjectKey}" +
+                " -Dsonar.projectName=${SQ_ProjectKey}" +
+                " -Dsonar.projectVersion=11" +
+                " -Dsonar.sources=${ISPW_Application}\\MF_Source" +
+                " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
+                " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
+                " -Dsonar.tests=Ed_Can_Delete_Two" +
+                //" -Dsonar.tests=TTT_Unit_Tests" +
+                //" -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
+                " -Dsonar.testExecutionReportPaths=\"${Sonar_Location}\"" +
+                " -Dsonar.sourceEncoding=UTF-8" +
+                " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
+        }
+    }
+}
+stage("Check Quality Gate")
+{
+    node{ 
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Check Quality Gate Stage          "
+        println "*************************************************************************************************************************************************" 
+        timeout(time: 4, unit: 'MINUTES') {
+            // Wait for webhook call back from SonarQube
+            def qg = waitForQualityGate()
+            if (qg.status != 'OK')
+            {
+                echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+                def assignment = "${ISPW_Container}"
+                echo "Assignment that is being regressed is: "
+                echo assignment
+                error "Exiting Pipeline"
+                // If the quality gate is anything other than Green, regress the promoted code
+               // Define variables to be used to call ISPW
+            //    def ces
+            //    def container
+            //    def ces          = "${Jenkins_CES}"
+            //    String ispwRequestBdy = /assignmentId=${ISPW_Container}
+            //       level=${ISPW_Stg_Level} 
+            //       runtimeConfiguration=${ISPW_RuntimeConfig} 
+            //       events.name=Completed events.body=Regressed
+            //       events.httpHeaders=Jenkins-Crumb:no-crumb
+            //       events.credentials=admin:library/
+
+            //    // Call ISPW Operation
+            //    ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
+            //    credentialsId: ces,
+            //    ispwAction: 'RegressAssignment',
+            //    ispwRequestBody: ispwRequestBdy
+                
+            //     error "Exiting Pipeline"
+            }
+            else{
+                emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
+                subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
+                to: 'ed.gannaway@compuware.com'
+                    
+                echo "Quality Gate status is: {${qg.status}"
+            }
+        }   
+    }
+}
