@@ -63,7 +63,8 @@ String ISPW_RuntimeConfig = "ISPW"          // ISPW or ISPT
 // Directory for tests that are downloaded to the jenkins workspace
 //String TTT_Project        = "EdsFixPipeline"  // The name of your TTT project  Old 07/27/2020
 //String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project Old 07/27/2020
-String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
+//String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
+String TTT_Project        = "Tests"  // The name of your TTT project
 
 // Total Test JCL and Scenario/Testsuite used in CI process
 String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
