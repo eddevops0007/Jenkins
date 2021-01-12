@@ -1,0 +1,54 @@
+New:
+
+totaltest clearCodeCoverage: true, 
+41  collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+44  collectCCSystem: 'systemName', 
+45  collectCCTestID: 'TestID', 
+46  collectCodeCoverage: true, 
+connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131', 
+30  credentialsId: 'hdaelg0', 
+enterpriseDataServerId: '', 
+31  environmentId: '', 
+33  folderPath: '', 
+selectEnvironmentRadio: '-hci', 
+39  serverCredentialsId: 'hdaelg0', 
+37  serverUrl: 'http://cwcc.compuware.com:2020', 
+useScenarios: true
+
+Old
+
+
+stage("Run Total Tests")
+{
+    node{
+        // Note this is a working Section using the Functional Test Plugin
+        // Run Total Test Jenkins Plugin
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Run Total Tests Stage          "
+        println "*************************************************************************************************************************************************" 
+ 9           totaltest credentialsId: 'hdaelg0', 
+  11          environmentId: '5b508b8a787be73b59238d38',
+ //           folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Scenarios/',  // use this to point to Unit or Functional Test Folder
+ 12           folderPath: 'Ed_Can_Delete_Two/Ed_Can_Delete_Two/Tests/Scenarios/',  // use this to point to Unit or Functional Test Folder
+            jsonFile: 'changedPrograms.json',
+            recursive: true, 
+            selectProgramsOption: true, 
+  15          serverUrl: 'http://cwcc:2020',
+            // Added the following line for Security that was added in Janary 2021 on CWCC
+  14          serverCredentialsId: 'hdaelg0', 
+            // CodeCoverage statements:
+  4          collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+            //collectCCSystem: 'Mysystemid', 
+            //collectCCTestID: 'Mytestid', 
+   5         collectCCSystem: "${TTT_Project}",
+    6        collectCCTestID: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
+     7       collectCodeCoverage: true
+                    
+        // Process the Total Test result files into Jenkins
+            junit allowEmptyResults:    true,
+                keepLongStdio:          true,
+                testResults:            "TTTUnit/*.xml"
+        //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'  
+    }
+}
