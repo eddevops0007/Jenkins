@@ -151,7 +151,8 @@ stage("Downlaod Topaz Total Test from Github")
         doGenerateSubmoduleConfigurations: false, 
 //        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git"]],
 //        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git/TotalTest - ISPW - Git/Functional Test"]], Old 11/06/2020
-        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
+//        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
+        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "Ed_Can_Delete_Two"]],
         submoduleCfg: [], 
 //        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]]) Old 11/06/2020
         userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TTT.git']]])
