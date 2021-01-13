@@ -1,0 +1,129 @@
+#!/usr/bin/env groovy
+import hudson.model.*
+import hudson.EnvVars
+import groovy.json.JsonSlurperClassic
+import groovy.json.JsonBuilder
+import groovy.json.JsonOutput
+import java.net.URL
+
+// Initialization
+// The example application uses three parallel paths (DEV1, DEV2, DEV3). In order to use the correct STEPLIB concatenation in the Topaz for Total Test runner.jcl there are three versions of the JCL file in each Topaz for Total Test project used. To determine the correct JCL file to use, the script determines the current path from the ISPW level being passed to the pipeline. Using the path number, the name for the runner JCL to be used is being built and the next level in the path being determined.
+//def PathNum              = ISPW_Src_Level.charAt(ISPW_Src_Level.length() - 1)
+//def TTT_Jcl1              = "Runner_PATH" + PathNum + ".jcl"
+//def ISPW_Target_Level    = "QA" + PathNum
+//def mailRecipient        = mailRecipientMap[(ISPW_Owner.toUpperCase())]
+
+//echo "The ISPW Path Number is: " PathNum
+//echo "The Total Test Runner JCL is: " TTT_Jcl1
+//echo "The ISPW Target Level is: " ISPW_Target_Level
+//echo "The email address of the owner of the promotion set from the map of mail recipients is: " mailRecipient
+   
+
+echo "This Build is EdsFixGeneratePipelineOct2020 Version 01.00.0000"
+echo "Date it was created: Oct 19, 2020"
+echo "Date it was last updated: Oct 19, 2020"
+echo "The ISPW Stream being used is: ${ISPW_Stream}"
+echo "The ISPW Application being used is: ${ISPW_Application}"
+echo "The ISPW Container being used is: ${ISPW_Container}"
+echo "The ISPW Level being used is: ${ISPW_Level}"
+echo "The ISPW SetID being used is: ${ISPW_SetId}"
+echo "The ISPW Release being used is: ${ISPW_Release}"
+echo "The ISPW Event being used is: ${ISPW_Event}"
+
+echo "The ISPW Level the promote has been started from is: ${ISPW_Src_Level}"
+echo "The ISPW Assignment is:  ${ISPW_Assignment}"
+echo "The ISPW ISPW Container Type (0. - assignment, 1. - release, 2. - set) is: ${ISPW_Container_Type}"
+echo "The ISPW Owner UserID is: ${ISPW_Owner}"
+
+//Compuware Envirnoment to connect
+String HCI_Connection     = "cwcc:16196"
+String CES_Connection     = "cwcc:2020"       
+
+// Jenkins credential ID and CES Personal Access token to be used for mainframe access
+String Jenkins_Id        = "hdaelg0"      // ID that was created in Jenkins containing mainframe CWCC ID/PW
+String Jenkins_CES       = "hdaelg0ces"   // A secret text credential containing your CES token
+String CES_Token         = "8ade625f-07a2-4be6-a9f8-0653c5969d07"   // Ed's CES Token using hdaelg0
+
+// Github specifications
+String github_credentials = "SharkWorks1_Github" // ID that was created in Jenkins containing Ed's github ID/PW
+//String github_url         = "https://github.com/SharkWorks1/EdsFixPipeline.git" // The github URL where your TTT test is stored Old 07/27/2020
+//String github_url         = "https://github.com/eddevops0007/TopazForTotalTest.git" // The github URL where your TTT test is stored Old 11/06/2020
+String github_url         = "https://github.com/eddevops0007/TTT.git" // The github URL where your TTT test is stored
+
+// ISPW Levels and container to be used by the promote/deploy/generate/regress operations
+String ISPW_ContainerType = "assignments"   // Valid values are assignments or releases
+// String ISPW_Container     = "BAW1000040"    // The container where your items are in ISPW
+// String ISPW_Stream        = "FTSDEMO"       // Your ISPW stream
+// String ISPW_Application   = "BAW1"          // Your ISPW application
+String ISPW_RuntimeConfig = "ISPW"          // ISPW or ISPT
+//String ISPW_Dev_Level     = "DEV1"          // The name of your DEV level
+//String ISPW_Stg_Level     = "QA1"           // The name of the next level up from your DEV level
+//String ISPW_Release       = "SKO19  "       // The ISPW release ID used in XLR
+
+// Directory for tests that are downloaded to the jenkins workspace
+//String TTT_Project        = "EdsFixPipeline"  // The name of your TTT project  Old 07/27/2020
+//String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project Old 07/27/2020
+String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
+// 01/12/2021 String TTT_Project        = "Tests"  // The name of your TTT project
+
+// Total Test JCL and Scenario/Testsuite used in CI process
+String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
+echo "TTT_TestPackage - The input file to SonarQube is: ${TTT_TestPackage}"
+//String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT  
+String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT  
+echo "TTT_Sonar - The input file to SonarQube is: ${TTT_Sonar}"
+String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenario
+echo "TTT_PackageType - The suffix of your TTT Scenario is: ${TTT_PackageType}"
+String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
+echo "TTT_Jcl - The name of the JCL file is: ${TTT_Jcl}"
+String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
+echo "CC_repository - The DSN of your code coverage repository is ${CC_repository}"
+
+// SonarQube ID used for both project key and project name
+String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // The SonarQube project name
+echo "SQ_Project - The SonarQube project name is: ${SQ_Project}"
+
+// XL Release values
+//String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
+//String XLR_User	          = "Xuser05"	// XLR Credentials
+
+// stage("Clear out the workspace")
+//     {
+//         dir("./")
+//         {
+//             deleteDir()
+//         }
+//     }
+
+import hudson.model.*
+
+stage("Clear out the workspace")
+    {
+       node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Clear out the workspace Stage          "
+        println "*************************************************************************************************************************************************" 
+        dir('./')
+        {
+            deleteDir()
+        }
+       }
+    }
+    stage("Download Source from a PDS")
+    {
+       node{
+        println "*************************************************************************************************************************************************"
+        println "*   The start of:           "
+        println "*                 Download Source from a PDS          "
+        println "*************************************************************************************************************************************************" 
+
+        checkout([$class: 'PdsConfiguration', 
+        connectionId: 'e6b98f2c-c259-4002-a38c-4c5c8d61d345', 
+        credentialsId: 'hdaelg0', 
+        fileExtension: 'CBL', 
+        filterPattern: '''CWXTCOB
+                        CWXTDATE''', 
+        targetFolder: 'HDAELG0.LIVE.DEMO.COBOL6.ESS.COBOL'])
+       }
+    }
