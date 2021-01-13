@@ -122,8 +122,7 @@ stage("Clear out the workspace")
         connectionId: 'e6b98f2c-c259-4002-a38c-4c5c8d61d345', 
         credentialsId: 'hdaelg0', 
         fileExtension: 'CBL', 
-        filterPattern: '''CWXTCOB
-                        CWXTDATE''', 
+        filterPattern: '''CWXT*''', 
         targetFolder: 'HDAELG0.LIVE.DEMO.COBOL6.ESS.COBOL'])
        }
     }
