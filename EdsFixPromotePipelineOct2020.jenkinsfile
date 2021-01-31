@@ -140,6 +140,8 @@ stage("Run Total Tests")
          recursive: true, 
          selectProgramsOption: true, 
          serverUrl: 'http://cwcc:2020',
+        // Added the following line ON 01/31/2021 for Security that was added in Janary 2021 on CWCC
+        serverCredentialsId: 'hdaelg0', 
          // CodeCoverage statements:
         collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
         //collectCCSystem: 'Mysystemid', 
