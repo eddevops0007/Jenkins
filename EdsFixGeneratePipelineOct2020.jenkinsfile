@@ -180,7 +180,7 @@ stage("Run Total Tests")
             // Added the following line for Security that was added in Janary 2021 on CWCC
             serverCredentialsId: 'hdaelg0', 
             // CodeCoverage statements:
-            collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+            collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAG', 
             //collectCCSystem: 'Mysystemid', 
             //collectCCTestID: 'Mytestid', 
             collectCCSystem: "${TTT_Project}",
