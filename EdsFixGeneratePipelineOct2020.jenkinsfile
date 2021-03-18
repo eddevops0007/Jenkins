@@ -283,13 +283,14 @@ stage("SonarQube Analysis")
             echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
 
            // bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+           //  Added cpy to the Dsonar.cobol.file.suffixes=cbl,cpy statement to pull in the procedure copybook 
            bat "${scannerHome}/bin/sonar-scanner" +
                 " -Dsonar.projectKey=${SQ_ProjectKey}" +
                 " -Dsonar.projectName=${SQ_ProjectKey}" +
                 " -Dsonar.projectVersion=11" +
                 " -Dsonar.sources=${ISPW_Application}\\MF_Source" +
                 " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
-                " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
+                " -Dsonar.cobol.file.suffixes=cbl,cpy,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
                 // 01/12/2021 " -Dsonar.tests=Ed_Can_Delete_Two" +
                 " -Dsonar.tests=TTT_Unit_Tests" +
                 //" -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
