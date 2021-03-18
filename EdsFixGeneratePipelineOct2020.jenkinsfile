@@ -76,7 +76,7 @@ String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenari
 echo "TTT_PackageType - The suffix of your TTT Scenario is: ${TTT_PackageType}"
 String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
 echo "TTT_Jcl - The name of the JCL file is: ${TTT_Jcl}"
-String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
+String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAG" // The DSN of your code coverage repository
 echo "CC_repository - The DSN of your code coverage repository is ${CC_repository}"
 
 // SonarQube ID used for both project key and project name
