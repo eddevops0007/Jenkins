@@ -80,7 +80,7 @@ String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAG" // The DSN of your
 echo "CC_repository - The DSN of your code coverage repository is ${CC_repository}"
 
 // SonarQube ID used for both project key and project name
-String SQ_Project         = "Eds_FIX_Generate_Pipeline_V3" // The SonarQube project name
+String SQ_Project         = "Eds_FIX_Generate_Pipeline_V4" // The SonarQube project name
 echo "SQ_Project - The SonarQube project name is: ${SQ_Project}"
 
 // XL Release values
