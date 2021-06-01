@@ -264,7 +264,7 @@ stage("Check Quality Gate")
                 # you may populate the following properties in \'Request\' field.
                 # The property value should be based on your own container ID and level.
                 #
-                assignmentId=ELG1000041
+                assignmentId=ELG1000040
                 level=EMR
                 '''
             // If the quality gate is anything other than Green, regress the promoted code
@@ -299,7 +299,7 @@ stage("Check Quality Gate")
                 # you may populate the following properties in \'Request\' field.
                 # The property value should be based on your own container ID and level.
                 #
-                assignmentId=ELG1000041
+                assignmentId=ELG1000040
                 level=EMR
                 '''
              //   emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
