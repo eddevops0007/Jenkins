@@ -137,28 +137,28 @@ stage("Download Source from ISPW")
 
 } 
 
-stage("Downlaod Topaz Total Test from Github")
-{
-//    def Git_Repo_URL = "${Git_URL}"
-//    echo "Git Repo URL is: " Git_Repo_URL
-      //Download the test from github
-    node{
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Downlaod Topaz Total Test from Github Stage          "
-        println "*************************************************************************************************************************************************" 
-        checkout([$class: 'GitSCM', 
-        branches: [[name: '*/master']], 
-        doGenerateSubmoduleConfigurations: false, 
-//        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git"]],
-//        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git/TotalTest - ISPW - Git/Functional Test"]], Old 11/06/2020
-        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
-// 01/12/2021         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "Ed_Can_Delete_Two"]],
-        submoduleCfg: [], 
-//        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]]) Old 11/06/2020
-        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TTT.git']]])
+    stage("Downlaod Topaz Total Test from Github")
+    {
+    //    def Git_Repo_URL = "${Git_URL}"
+    //    echo "Git Repo URL is: " Git_Repo_URL
+        //Download the test from github
+        node{
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 Downlaod Topaz Total Test from Github Stage          "
+            println "*************************************************************************************************************************************************" 
+            checkout([$class: 'GitSCM', 
+            branches: [[name: '*/master']], 
+            doGenerateSubmoduleConfigurations: false, 
+    //        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git"]],
+    //        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TotalTest - ISPW - Git/TotalTest - ISPW - Git/Functional Test"]], Old 11/06/2020
+            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
+    // 01/12/2021         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "Ed_Can_Delete_Two"]],
+            submoduleCfg: [], 
+    //        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]]) Old 11/06/2020
+            userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TTT.git']]])
+        }
     }
-}
 
 stage("Run Total Tests")
 {
@@ -294,7 +294,7 @@ stage("SonarQube Analysis")
                 // 01/12/2021 " -Dsonar.tests=Ed_Can_Delete_Two" +
                 " -Dsonar.tests=TTT_Unit_Tests" +
                 //" -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
-                " -Dsonar.testExecutionReportPaths=\"${Sonar_Location}\"" +
+                // 06/01/2021 " -Dsonar.testExecutionReportPaths=\"${Sonar_Location}\"" +
                 " -Dsonar.sourceEncoding=UTF-8" +
                 " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
         }
