@@ -287,7 +287,7 @@ stage("SonarQube Analysis")
            bat "${scannerHome}/bin/sonar-scanner" +
                 " -Dsonar.projectKey=${SQ_ProjectKey}" +
                 " -Dsonar.projectName=${SQ_ProjectKey}" +
-                " -Dsonar.projectVersion=11" +
+                " -Dsonar.projectVersion=12" +
                 " -Dsonar.sources=${ISPW_Application}\\MF_Source" +
                 " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
                 " -Dsonar.cobol.file.suffixes=cbl,cpy,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
