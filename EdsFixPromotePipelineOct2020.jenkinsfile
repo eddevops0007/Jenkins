@@ -92,7 +92,7 @@ stage("Download Source from ISPW")
         //Download the source
         checkout([$class: 'IspwConfiguration', 
         componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
-        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI
+        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196
         credentialsId: "${Jenkins_Id}",  
         levelOption: '0',                                       //0-selected level only 1-first found and above
         serverApplication: "${ISPW_Application}", 
@@ -230,7 +230,7 @@ stage("SonarQube Analysis")
                 " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
                 " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
                 " -Dsonar.tests=TTT_Unit_Tests" +
-                " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
+                // 06/01/2021 " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
                 " -Dsonar.sourceEncoding=UTF-8" +
                 " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
         }
@@ -249,10 +249,24 @@ stage("Check Quality Gate")
             if (qg.status != 'OK')
             {
                 echo "Pipeline aborted due to quality gate failure: ${qg.status}"
-                def assignment = "${ISPW_Container}"
+                def assignment = "${ISPW_Assignment}"
                 echo "Assignment that is being regressed is: "
                 echo assignment
-                error "Exiting Pipeline"
+               // error "Exiting Pipeline"
+
+            ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196 
+            credentialsId: 'HDAELG0-CES-CWCC', 
+            ispwAction: 'RegressAssignment', 
+            ispwRequestBody: '''#The following messages are commented out to show how to use the \'Request\' field.
+                #Click on the help button to the right of the screen for examples of how to populate this field based on \'Action\' type
+                #
+                #For example, if you select GenerateTasksInAssignment for \'Action\' field,
+                # you may populate the following properties in \'Request\' field.
+                # The property value should be based on your own container ID and level.
+                #
+                assignmentId=assignment
+                level=EMR
+                '''
             // If the quality gate is anything other than Green, regress the promoted code
             // Define variables to be used to call ISPW
             //    def ces
@@ -274,11 +288,25 @@ stage("Check Quality Gate")
             //     error "Exiting Pipeline"
             }
             else{
-                emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
-                subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
-                to: 'ed.gannaway@compuware.com'
-                    
-                echo "Quality Gate status is: {${qg.status}"
+            ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196 
+            // connectionId: 'e6b98f2c-c259-4002-a38c-4c5c8d61d345', 
+                credentialsId: 'HDAELG0-CES-CWCC', 
+                ispwAction: 'RegressAssignment', 
+                    ispwRequestBody: '''#The following messages are commented out to show how to use the \'Request\' field.
+                #Click on the help button to the right of the screen for examples of how to populate this field based on \'Action\' type
+                #
+                #For example, if you select GenerateTasksInAssignment for \'Action\' field,
+                # you may populate the following properties in \'Request\' field.
+                # The property value should be based on your own container ID and level.
+                #
+                assignmentId=assignment
+                level=EMR
+                '''
+             //   emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
+             //   subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
+             //   to: 'ed.gannaway@compuware.com'
+             //       
+             //   echo "Quality Gate status is: {${qg.status}"
             }
         }   
     }
