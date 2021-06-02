@@ -250,9 +250,9 @@ stage("Check Quality Gate")
             if (qg.status != 'OK')
             {
                 echo "Pipeline aborted due to quality gate failure: ${qg.status}"
-                def assignment = "${ISPW_Assignment}"
-                echo "Assignment that is being regressed is: "
-                echo assignment
+               // def assignment = "${ISPW_Assignment}"
+               // echo "Assignment that is being regressed is: "
+              //  echo assignment
                // error "Exiting Pipeline "
 
             ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196 
