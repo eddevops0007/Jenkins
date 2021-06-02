@@ -1,314 +1,317 @@
-#!/usr/bin/env groovy
-import hudson.model.*
-import hudson.EnvVars
-import groovy.json.JsonSlurperClassic
-import groovy.json.JsonBuilder
-import groovy.json.JsonOutput
-import java.net.URL
+    #!/usr/bin/env groovy
+    import hudson.model.*
+    import hudson.EnvVars
+    import groovy.json.JsonSlurperClassic
+    import groovy.json.JsonBuilder
+    import groovy.json.JsonOutput
+    import java.net.URL
 
-echo "This Build is EdsFixPromotePipelineOct2020 Version 01.02.0000"
-echo "Date it was created: Nov 05, 2020"
-echo "Date it was last updated: June 01, 2021"
-echo "The ISPW Stream being used is: ${ISPW_Stream}"
-echo "The ISPW Application being used is: ${ISPW_Application}"
-echo "The ISPW Container being used is: ${ISPW_Container}"
-echo "The ISPW Level being used is: ${ISPW_Level}"
-echo "The ISPW SetID being used is: ${ISPW_SetId}"
-echo "The ISPW Release being used is: ${ISPW_Release}"
-echo "The ISPW Event being used is: ${ISPW_Event}"
+    echo "This Build is EdsFixPromotePipelineOct2020 Version 01.03.0000"
+    echo "Date it was created: Nov 05, 2020"
+    echo "Date it was last updated: June 02, 2021"
+    echo "The ISPW Stream being used is: ${ISPW_Stream}"
+    echo "The ISPW Application being used is: ${ISPW_Application}"
+    echo "The ISPW Container being used is: ${ISPW_Container}"
+    echo "The ISPW Level being used is: ${ISPW_Level}"
+    echo "The ISPW SetID being used is: ${ISPW_SetId}"
+    echo "The ISPW Release being used is: ${ISPW_Release}"
+    echo "The ISPW Event being used is: ${ISPW_Event}"
 
-//Compuware Envirnoment to connect
-String HCI_Connection     = "cwcc:16196"
-String CES_Connection     = "cwcc:2020"       
+    //Compuware Envirnoment to connect
+    String HCI_Connection     = "cwcc:16196"
+    String CES_Connection     = "cwcc:2020"       
 
-// Jenkins credential ID and CES Personal Access token to be used for mainframe access
-String Jenkins_Id        = "hdaelg0"      // ID that was created in Jenkins containing mainframe CWCC ID/PW
-String Jenkins_CES       = "hdaelg0ces"   // A secret text credential containing your CES token
-String CES_Token         = "8ade625f-07a2-4be6-a9f8-0653c5969d07"   // Ed's CES Token using hdaelg0
+    // Jenkins credential ID and CES Personal Access token to be used for mainframe access
+    String Jenkins_Id        = "hdaelg0"      // ID that was created in Jenkins containing mainframe CWCC ID/PW
+    String Jenkins_CES       = "hdaelg0ces"   // A secret text credential containing your CES token
+    String CES_Token         = "8ade625f-07a2-4be6-a9f8-0653c5969d07"   // Ed's CES Token using hdaelg0
 
-// Github specifications
-String github_credentials = "SharkWorks1_Github" // ID that was created in Jenkins containing Ed's github ID/PW
-//String github_url         = "https://github.com/SharkWorks1/EdsFixPipeline.git" // The github URL where your TTT test is stored Old 07/27/2020
-//String github_url         = "https://github.com/eddevops0007/TopazForTotalTest.git" // The github URL where your TTT test is stored Old 10/06/2020
-String github_url         = "https://github.com/eddevops0007/TTT.git" // The github URL where your TTT test is stored
+    // Github specifications
+    String github_credentials = "SharkWorks1_Github" // ID that was created in Jenkins containing Ed's github ID/PW
+    //String github_url         = "https://github.com/SharkWorks1/EdsFixPipeline.git" // The github URL where your TTT test is stored Old 07/27/2020
+    //String github_url         = "https://github.com/eddevops0007/TopazForTotalTest.git" // The github URL where your TTT test is stored Old 10/06/2020
+    String github_url         = "https://github.com/eddevops0007/TTT.git" // The github URL where your TTT test is stored
 
-// ISPW Levels and container to be used by the promote/deploy/generate/regress operations
-String ISPW_ContainerType = "assignments"   // Valid values are assignments or releases
-// String ISPW_Container     = "BAW1000040"    // The container where your items are in ISPW
-// String ISPW_Stream        = "FTSDEMO"       // Your ISPW stream
-// String ISPW_Application   = "BAW1"          // Your ISPW application
-String ISPW_RuntimeConfig = "ISPW"          // ISPW or ISPT
-//String ISPW_Dev_Level     = "DEV1"          // The name of your DEV level
-//String ISPW_Stg_Level     = "QA1"           // The name of the next level up from your DEV level
-//String ISPW_Release       = "SKO19  "       // The ISPW release ID used in XLR
+    // ISPW Levels and container to be used by the promote/deploy/generate/regress operations
+    String ISPW_ContainerType = "assignments"   // Valid values are assignments or releases
+    // String ISPW_Container     = "BAW1000040"    // The container where your items are in ISPW
+    // String ISPW_Stream        = "FTSDEMO"       // Your ISPW stream
+    // String ISPW_Application   = "BAW1"          // Your ISPW application
+    String ISPW_RuntimeConfig = "ISPW"          // ISPW or ISPT
+    //String ISPW_Dev_Level     = "DEV1"          // The name of your DEV level
+    //String ISPW_Stg_Level     = "QA1"           // The name of the next level up from your DEV level
+    //String ISPW_Release       = "SKO19  "       // The ISPW release ID used in XLR
 
-// Directory for tests that are downloaded to the jenkins workspace
-//String TTT_Project        = "EdsFixPipeline"  // The name of your TTT project  Old 07/27/2020
-//String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project Old 11/06/2020
-String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
+    // Directory for tests that are downloaded to the jenkins workspace
+    //String TTT_Project        = "EdsFixPipeline"  // The name of your TTT project  Old 07/27/2020
+    //String TTT_Project        = "CWXTCOB_GIT_DEMO0001"  // The name of your TTT project Old 11/06/2020
+    String TTT_Project        = "TTT_Unit_Tests"  // The name of your TTT project
 
-// Total Test JCL and Scenario/Testsuite used in CI process
-String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
-String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT 
-String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenario
-String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
-String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
+    // Total Test JCL and Scenario/Testsuite used in CI process
+    String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
+    String TTT_Sonar          = "${TTT_Project}_${TTT_TestPackage}.sonar" // The input file to SonarQube from TTT 
+    String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenario
+    String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
+    String CC_repository      = "SALESSUP.ELG1.DEV1.CODE.COVERAGE" // The DSN of your code coverage repository
 
-// SonarQube ID used for both project key and project name
-String SQ_Project         = "Eds_FIX_Promote_Pipeline_V0002" // Your SonarQube project name
+    // SonarQube ID used for both project key and project name
+    String SQ_Project         = "Eds_FIX_Promote_Pipeline_V0002" // Your SonarQube project name
 
-// XL Release values
-//String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
-//String XLR_User	          = "Xuser05"	// XLR Credentials
+    // XL Release values
+    //String XLR_Template       = "Roland/Release from Jenkins (Roland)" // XL Release template 
+    //String XLR_User	          = "Xuser05"	// XLR Credentials
 
-import hudson.model.*
+    import hudson.model.*
 
-stage("Clear out the workspace")
-    {
-       node{
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Clear out the workspace Stage          "
-        println "*************************************************************************************************************************************************" 
- 
-        dir('./')
+    stage("Clear out the workspace")
         {
-            deleteDir()
-        }
-       }
-    }
+        node{
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 Clear out the workspace Stage          "
+            println "*************************************************************************************************************************************************" 
     
-stage("Download Source from ISPW")
-{
-    // Choose the folllowing from the Jenkins Snippet Generator:
-    //      checkout: Check out from version control
-    //          SCM : Choose ISPW Repository
-
-    node{
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Download Source from ISPW Stage          "
-        println "*************************************************************************************************************************************************" 
-        //Download the source
-        checkout([$class: 'IspwConfiguration', 
-        componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
-        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196
-        credentialsId: "${Jenkins_Id}",  
-        levelOption: '0',                                       //0-selected level only 1-first found and above
-        serverApplication: "${ISPW_Application}", 
-        serverConfig: "${ISPW_RuntimeConfig}", 
-        serverLevel: 'EMR', 
-        //serverLevel: "${ISPW_Level}", 
-        ispwDownloadIncl: true,                                 // Download Includes (Copybooks)
-        serverStream: "${ISPW_Stream}"])
-    }
-
-} 
-
-stage("Downlaod Topaz Total Test from Github")
-{
-      //Download the test from github
-    node{
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Downlaod Topaz Total Test from Github Stage          "
-        println "*************************************************************************************************************************************************" 
-        checkout([$class: 'GitSCM', 
-        branches: [[name: '*/master']], 
-        doGenerateSubmoduleConfigurations: false, 
-        //extensions: [],  old 11/06/2020
-        extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
-        submoduleCfg: [], 
-        //userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]]) Old 11/06/2020
-        userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TTT.git']]])
-    }
-}
-
-stage("Run Total Tests")
-{
-    node{
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Run Total Tests Stage          "
-        println "*************************************************************************************************************************************************" 
-        // Run Total Test Jenkins Plugin
-         totaltest credentialsId: 'hdaelg0', 
-         environmentId: '5b508b8a787be73b59238d38', 
-         //folderPath: 'TTT_Functional_Tests/Scenarios',  
-         // 06/01/2021 folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/TTT_Functional_Tests/Scenarios/',
-         folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Scenarios/',  // use this to point to Unit or Functional Test Folder
-         jsonFile: 'changedPrograms.json', 
-         recursive: true, 
-         selectProgramsOption: true, 
-         serverUrl: 'http://cwcc:2020',
-        // Added the following line ON 01/31/2021 for Security that was added in Janary 2021 on CWCC
-        serverCredentialsId: 'hdaelg0', 
-         // CodeCoverage statements:
-        collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
-        //collectCCSystem: 'Mysystemid', 
-        //collectCCTestID: 'Mytestid', 
-        collectCCSystem: "${TTT_Project}",
-        collectCCTestID: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
-        collectCodeCoverage: true
-
-        // Process the Total Test result files into Jenkins
-            junit allowEmptyResults:    true,
-                keepLongStdio:          true,
-                testResults:            "TTTUnit/*.xml"
-        //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'   
-}
-}
-
-stage("Retrieve Code Coverage Data")
-{
-    // This was copied from my EdsFixGeneratePipeline
-    node{
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Retrieve Code Coverage Data Stage          "
-        println "*************************************************************************************************************************************************" 
-        // Retrieve code coverage data
-        string sources="${ISPW_Application}\\MF_Source"
-        def ccproperties   = 'cc.sources=' + sources + 
-        '\rcc.repos=' + CC_repository + 
-        '\rcc.system=' + TTT_Project + 
-        '\rcc.test=' + BUILD_DISPLAY_NAME + 
-        //'\rcc.system=Mysystemid' + 
-        //'\rcc.test=Mytestid' + 
-        '\rcc.ddio.overrides='
-        step([$class: 'CodeCoverageBuilder',
-        analysisProperties: ccproperties,
-            analysisPropertiesPath: '',
-            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
-            credentialsId: Jenkins_Id])
-    }
-}
-
-
-stage("SonarQube Analysis") 
-{
-    node{
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 SonarQube Analysis Stage          "
-        println "*************************************************************************************************************************************************" 
-        // Requires SonarQube Scanner 2.8+
-        echo "TTT_Project - ${TTT_Project}"
-        echo "TTT_Sonar - ${TTT_Sonar}"
-        echo "ISPW_Application - ${ISPW_Application}"
-
-        def scannerHome = tool 'scanner';  //Name of the Sonar Scanner as defined in Jenkins Manage Jenkins->Global Tools Configuration->SonarQube Scanner
-        withSonarQubeEnv('localhost')      //Name of the SonarQube server configuration in Jenkins Manage Jenkins->Configure System->SonarQube servers 
-        {
-            // Run SonarQube Scanner 
-            def TTTListOfResults     = findFiles(glob: 'TTTSonar/*.xml')
-            def SQ_TestResult        = ''
-
-            TTTListOfResults.each
+            dir('./')
             {
-                def TTTResultName    = it.name   // Get the name of the Total Test results file
-                SQ_TestResult = SQ_TestResult + "TTTSonar/" + it.name +  ',' // Append the results file to the property
+                deleteDir()
             }
+        }
+        }
+        
+    stage("Download Source from ISPW")
+    {
+        // Choose the folllowing from the Jenkins Snippet Generator:
+        //      checkout: Check out from version control
+        //          SCM : Choose ISPW Repository
 
-            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml"
-            def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
-            def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
-            def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
-            def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
+        node{
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 Download Source from ISPW Stage          "
+            println "*************************************************************************************************************************************************" 
+            //Download the source
+            checkout([$class: 'IspwConfiguration', 
+            componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
+            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196
+            credentialsId: "${Jenkins_Id}",  
+            levelOption: '0',                                       //0-selected level only 1-first found and above
+            serverApplication: "${ISPW_Application}", 
+            serverConfig: "${ISPW_RuntimeConfig}", 
+            serverLevel: 'EMR', 
+            //serverLevel: "${ISPW_Level}", 
+            ispwDownloadIncl: true,                                 // Download Includes (Copybooks)
+            serverStream: "${ISPW_Stream}"])
+        }
 
-            echo "SQ_Tests - ${SQ_Tests}"
-            echo "SQ_ProjectKey - ${SQ_ProjectKey}"
-            echo "SQ_Source - ${SQ_Source}"
-            echo "SQ_Copybook - ${SQ_Copybook}"
-            echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
+    } 
 
-           // bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
-           bat "${scannerHome}/bin/sonar-scanner" +
-                " -Dsonar.projectKey=${SQ_ProjectKey}" +
-                " -Dsonar.projectName=${SQ_ProjectKey}" +
-                " -Dsonar.projectVersion=11" +
-                " -Dsonar.sources=${ISPW_Application}\\MF_Source" +
-                " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
-                " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
-                " -Dsonar.tests=TTT_Unit_Tests" +
-                // 06/01/2021 " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
-                " -Dsonar.sourceEncoding=UTF-8" +
-                " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
+    stage("Downlaod Topaz Total Test from Github")
+    {
+        //Download the test from github
+        node{
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 Downlaod Topaz Total Test from Github Stage          "
+            println "*************************************************************************************************************************************************" 
+            checkout([$class: 'GitSCM', 
+            branches: [[name: '*/master']], 
+            doGenerateSubmoduleConfigurations: false, 
+            //extensions: [],  old 11/06/2020
+            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "TTT_Unit_Tests"]],
+            submoduleCfg: [], 
+            //userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TopazForTotalTest.git']]]) Old 11/06/2020
+            userRemoteConfigs: [[url: 'https://github.com/eddevops0007/TTT.git']]])
         }
     }
-}
-stage("Check Quality Gate")
-{
-    node{ 
-        println "*************************************************************************************************************************************************"
-        println "*   The start of:           "
-        println "*                 Check Quality Gate Stage          "
-        println "*************************************************************************************************************************************************" 
-        timeout(time: 4, unit: 'MINUTES') {
-            // Wait for webhook call back from SonarQube
-            def qg = waitForQualityGate()
-            if (qg.status != 'OK')
+
+    stage("Run Total Tests")
+    {
+        node{
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 Run Total Tests Stage          "
+            println "*************************************************************************************************************************************************" 
+            // Run Total Test Jenkins Plugin
+            totaltest credentialsId: 'hdaelg0', 
+            environmentId: '5b508b8a787be73b59238d38', 
+            //folderPath: 'TTT_Functional_Tests/Scenarios',  
+            // 06/01/2021 folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/TTT_Functional_Tests/Scenarios/',
+            folderPath: 'TTT_Unit_Tests/TTT_Unit_Tests/Unit Test/Scenarios/',  // use this to point to Unit or Functional Test Folder
+            jsonFile: 'changedPrograms.json', 
+            recursive: true, 
+            selectProgramsOption: true, 
+            serverUrl: 'http://cwcc:2020',
+            // Added the following line ON 01/31/2021 for Security that was added in Janary 2021 on CWCC
+            serverCredentialsId: 'hdaelg0', 
+            // CodeCoverage statements:
+            collectCCRepository: 'SALESSUP.ELG1.DEV1.CODE.COVERAGE', 
+            //collectCCSystem: 'Mysystemid', 
+            //collectCCTestID: 'Mytestid', 
+            collectCCSystem: "${TTT_Project}",
+            collectCCTestID: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177
+            collectCodeCoverage: true
+
+            // Process the Total Test result files into Jenkins
+                junit allowEmptyResults:    true,
+                    keepLongStdio:          true,
+                    testResults:            "TTTUnit/*.xml"
+            //   junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'   
+    }
+    }
+
+    stage("Retrieve Code Coverage Data")
+    {
+        // This was copied from my EdsFixGeneratePipeline
+        node{
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 Retrieve Code Coverage Data Stage          "
+            println "*************************************************************************************************************************************************" 
+            // Retrieve code coverage data
+            string sources="${ISPW_Application}\\MF_Source"
+            def ccproperties   = 'cc.sources=' + sources + 
+            '\rcc.repos=' + CC_repository + 
+            '\rcc.system=' + TTT_Project + 
+            '\rcc.test=' + BUILD_DISPLAY_NAME + 
+            //'\rcc.system=Mysystemid' + 
+            //'\rcc.test=Mytestid' + 
+            '\rcc.ddio.overrides='
+            step([$class: 'CodeCoverageBuilder',
+            analysisProperties: ccproperties,
+                analysisPropertiesPath: '',
+                connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+                credentialsId: Jenkins_Id])
+        }
+    }
+
+
+    stage("SonarQube Analysis") 
+    {
+        node{
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 SonarQube Analysis Stage          "
+            println "*************************************************************************************************************************************************" 
+            // Requires SonarQube Scanner 2.8+
+            echo "TTT_Project - ${TTT_Project}"
+            echo "TTT_Sonar - ${TTT_Sonar}"
+            echo "ISPW_Application - ${ISPW_Application}"
+
+            def scannerHome = tool 'scanner';  //Name of the Sonar Scanner as defined in Jenkins Manage Jenkins->Global Tools Configuration->SonarQube Scanner
+            withSonarQubeEnv('localhost')      //Name of the SonarQube server configuration in Jenkins Manage Jenkins->Configure System->SonarQube servers 
             {
-                echo "Pipeline aborted due to quality gate failure: ${qg.status}"
-                def assignment = "${ISPW_Assignment}"
-                echo "Assignment that is being regressed is: "
-                echo assignment
-               // error "Exiting Pipeline "
+                // Run SonarQube Scanner 
+                def TTTListOfResults     = findFiles(glob: 'TTTSonar/*.xml')
+                def SQ_TestResult        = ''
 
-            ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196 
-            credentialsId: 'hdaelg0ces', 
-            ispwAction: 'RegressAssignment', 
-            ispwRequestBody: '''#The following messages are commented out to show how to use the \'Request\' field.
-                #Click on the help button to the right of the screen for examples of how to populate this field based on \'Action\' type
-                #
-                #For example, if you select GenerateTasksInAssignment for \'Action\' field,
-                # you may populate the following properties in \'Request\' field.
-                # The property value should be based on your own container ID and level.
-                #
-                assignmentId=ELG1000040
-                level=EMR
-                '''
-            // If the quality gate is anything other than Green, regress the promoted code
-            // Define variables to be used to call ISPW
-            //    def ces
-            //    def container
-            //    def ces          = "${Jenkins_CES}"
-            //    String ispwRequestBdy = /assignmentId=${ISPW_Container}
-            //       level=${ISPW_Stg_Level} 
-            //       runtimeConfiguration=${ISPW_RuntimeConfig} 
-            //       events.name=Completed events.body=Regressed
-            //       events.httpHeaders=Jenkins-Crumb:no-crumb
-            //       events.credentials=admin:library/
+                TTTListOfResults.each
+                {
+                    def TTTResultName    = it.name   // Get the name of the Total Test results file
+                    SQ_TestResult = SQ_TestResult + "TTTSonar/" + it.name +  ',' // Append the results file to the property
+                }
 
-            //    // Call ISPW Operation
-            //    ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
-            //    credentialsId: ces,
-            //    ispwAction: 'RegressAssignment',
-            //    ispwRequestBody: ispwRequestBdy
-                
-            //     error "Exiting Pipeline"
+                def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_Sonar}.xml"
+                def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
+                def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
+                def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
+                def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
+
+                echo "SQ_Tests - ${SQ_Tests}"
+                echo "SQ_ProjectKey - ${SQ_ProjectKey}"
+                echo "SQ_Source - ${SQ_Source}"
+                echo "SQ_Copybook - ${SQ_Copybook}"
+                echo "SQ_Cobol_conf - ${SQ_Cobol_conf}"
+
+            // bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+            bat "${scannerHome}/bin/sonar-scanner" +
+                    " -Dsonar.projectKey=${SQ_ProjectKey}" +
+                    " -Dsonar.projectName=${SQ_ProjectKey}" +
+                    " -Dsonar.projectVersion=11" +
+                    " -Dsonar.sources=${ISPW_Application}\\MF_Source" +
+                    " -Dsonar.cobol.copy.directories=${ISPW_Application}\\MF_Source" +
+                    " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy " +
+                    " -Dsonar.tests=TTT_Unit_Tests" +
+                    // 06/01/2021 " -Dsonar.testExecutionReportPaths=" + SQ_TestResult +
+                    " -Dsonar.sourceEncoding=UTF-8" +
+                    " -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
             }
-            else{
-            ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196 
-            // connectionId: 'e6b98f2c-c259-4002-a38c-4c5c8d61d345', 
+        }
+    }
+    stage("Check Quality Gate")
+    {
+        node{ 
+            println "*************************************************************************************************************************************************"
+            println "*   The start of:           "
+            println "*                 Check Quality Gate Stage          "
+            println "*************************************************************************************************************************************************" 
+            timeout(time: 4, unit: 'MINUTES') {
+                // Wait for webhook call back from SonarQube
+                def qg = waitForQualityGate()
+                if (qg.status != 'OK')
+                {
+                    echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+                    def assignment = "${ISPW_Assignment}"
+                    echo "Assignment that is being regressed is: "
+                    echo assignment
+                // error "Exiting Pipeline "
+
+                ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196 
                 credentialsId: 'hdaelg0ces', 
                 ispwAction: 'RegressAssignment', 
-                    ispwRequestBody: '''#The following messages are commented out to show how to use the \'Request\' field.
-                #Click on the help button to the right of the screen for examples of how to populate this field based on \'Action\' type
-                #
-                #For example, if you select GenerateTasksInAssignment for \'Action\' field,
-                # you may populate the following properties in \'Request\' field.
-                # The property value should be based on your own container ID and level.
-                #
-                assignmentId=ELG1000040
-                level=EMR
-                '''
-             //   emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
-             //   subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
-             //   to: 'ed.gannaway@compuware.com'
-             //       
-             //   echo "Quality Gate status is: {${qg.status}"
-            }
-        }   
+                ispwRequestBody: '''#The following messages are commented out to show how to use the \'Request\' field.
+                    #Click on the help button to the right of the screen for examples of how to populate this field based on \'Action\' type
+                    #
+                    #For example, if you select GenerateTasksInAssignment for \'Action\' field,
+                    # you may populate the following properties in \'Request\' field.
+                    # The property value should be based on your own container ID and level.
+                    #
+                    assignmentId=ELG1000040
+                    level=EMR
+                    '''
+
+                error "Exiting Pipeline"
+                // If the quality gate is anything other than Green, regress the promoted code
+                // Define variables to be used to call ISPW
+                //    def ces
+                //    def container
+                //    def ces          = "${Jenkins_CES}"
+                //    String ispwRequestBdy = /assignmentId=${ISPW_Container}
+                //       level=${ISPW_Stg_Level} 
+                //       runtimeConfiguration=${ISPW_RuntimeConfig} 
+                //       events.name=Completed events.body=Regressed
+                //       events.httpHeaders=Jenkins-Crumb:no-crumb
+                //       events.credentials=admin:library/
+
+                //    // Call ISPW Operation
+                //    ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
+                //    credentialsId: ces,
+                //    ispwAction: 'RegressAssignment',
+                //    ispwRequestBody: ispwRequestBdy
+
+                }
+                else{
+
+                    emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
+                    subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
+                    to: 'ed_gannaway@bmc.com'
+                        
+                    echo "Quality Gate status is: {${qg.status}"
+            //    ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI called CWCC:16196 
+            //        credentialsId: 'hdaelg0ces', 
+            //        ispwAction: 'RegressAssignment', 
+            //            ispwRequestBody: '''#The following messages are commented out to show how to use the \'Request\' field.
+            //        #Click on the help button to the right of the screen for examples of how to populate this field based on \'Action\' type
+            //        #
+            //        #For example, if you select GenerateTasksInAssignment for \'Action\' field,
+            //        # you may populate the following properties in \'Request\' field.
+            //        # The property value should be based on your own container ID and level.
+            //        #
+            //        assignmentId=ELG1000040
+            //        level=EMR
+            //        '''
+            //    error "Exiting Pipeline"
+
+                }
+            }   
+        }
     }
-}
