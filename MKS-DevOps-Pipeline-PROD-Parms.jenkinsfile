@@ -1,0 +1,287 @@
+#!/usr/bin/env groovy
+import hudson.model.*
+import hudson.EnvVars
+import groovy.json.JsonSlurperClassic
+import groovy.json.JsonBuilder
+import groovy.json.JsonOutput
+import java.net.URL
+
+//Compuware Envirnoment to connect
+String HCI_Connection     = "cwcc:16196"
+String CES_Connection     = "cwcc:2020"       
+
+// Jenkins credential ID and CES Personal Access token to be used for mainframe access
+String Jenkins_Id        = "${Parm_ISPW_Owner}"       					// A username with password credential containing your CWC2 ID/PW
+String Jenkins_CES       = "${Parm_ISPW_Owner}-CES"   					// A secret text credential containing your CES token for CWC2
+String CES_Token         = "e7b8aad6-980c-485b-a490-f6ec0b46077d" // Your CES token
+
+// Github specifications
+String github_credentials = "a7500faf-0dd3-42b5-8b00-0553524a79d2"       // A username with password credential containing your github ID/PW
+String github_url         = "https://github.com/msingh9999/CWXTCOB_MKS1" // The github URL where your TTT test is stored
+
+// ISPW Levels and container to be used by the promote/deploy/generate/regress operations
+String ISPW_Container     = Parm_ISPW_Container    	// Assignment ContainerID
+String ISPW_ContainerType = "assignments"   		// Valid values are assignments or releases
+String ISPW_Stream        = Parm_ISPW_Stream		// ISPW Stream (Ex. CWEZ)
+String ISPW_Application   = Parm_ISPW_Application	// ISPW APplication (EX. TXXX)
+String ISPW_RuntimeConfig = Parm_ISPW_RuntimeConfig	// ISPW Runtime config (Ex. ISP8)
+String ISPW_Dev_Level     = Parm_ISPW_Dev_Level		// ISPW Dev Level (Ex. DEV1)
+String ISPW_QA_Level      = Parm_ISPW_QA_Level		// ISPW QA Level (Ex. QA1)
+String ISPW_Stg_Level     = Parm_ISPW_Stg_Level		// ISPW Stage Level (Ex. STG1)
+String ISPW_Prod_Level    = Parm_ISPW_Prd_Level		// ISPW Prod Level (Ex. PRD)
+String ISPW_Owner         = Parm_ISPW_Owner  		// The user initiating the pipeline
+String ISPW_Release       = Parm_ISPW_Release       // The ISPW release ID used in XLR
+
+// Directory for tests that are downloaded to the jenkins workspace
+String TTT_Project        = "CWXTCOB_MKS1"  // The name of your TTT project
+
+// Total Test JCL and Scenario/Testsuite used in CI process
+String TTT_TestPackage    = "CWXTCOB_Scenario" // The filename name of your TTT Scenario
+String TTT_PackageType    = ".testscenario"    // The suffix of your TTT Scenario
+string TTT_PackageSonar   = "${TTT_Project}_${TTT_TestPackage}.sonar"  // The filename created by TTT for Sonar input	
+String TTT_Jcl            = "Runner.jcl"       // The name of the JCL file
+String CC_repository      = "PFHMKS0.XPCOVER.REPOSIT" // The DSN of your code coverage repository
+
+// SonarQube ID used for both project key and project name
+String SQ_Project         = "PFHMKS0-Pipeline" // Your SonarQube project name
+
+// XL Release values
+String XLR_Template       = "FTSDEMO/Release from Jenkins (FTSDEMO)" // XL Release template 
+String XLR_User	          = "pfhmks0"	// XLR Credentials
+
+
+
+/*
+stage("Generate Programs")
+{
+    node 
+    {
+        // Define variables to be used to call ISPW
+        def ces
+        def container
+        ces                 = "${Jenkins_CES}"
+        String ispwRequestBdy = /assignmentId=${ISPW_Container}
+           level=${ISPW_Dev_Level} 
+           runtimeConfiguration=${ISPW_RuntimeConfig} 
+           events.name=Completed events.body=Generated
+           events.httpHeaders=Jenkins-Crumb:no-crumb
+           events.credentials=admin:library/
+
+        // Call ISPW Operation
+        ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131', credentialsId: ces, ispwAction: 'GenerateTasksInAssignment', ispwRequestBody: ispwRequestBdy
+        }
+}
+
+stage("Promote Code")
+{
+    node
+    {
+        // Define variables to be used to call ISPW
+        def ces
+        def container
+        ces                 = "${Jenkins_CES}"
+        String ispwRequestBdy = /assignmentId=${ISPW_Container}
+           level=${ISPW_Dev_Level} 
+           runtimeConfiguration=${ISPW_RuntimeConfig} 
+           events.name=Completed events.body=Promoted
+           events.httpHeaders=Jenkins-Crumb:no-crumb
+           events.credentials=admin:library/
+
+        // Call ISPW Operation
+        ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131', credentialsId: ces, ispwAction: 'PromoteAssignment', ispwRequestBody: ispwRequestBdy
+        }
+}
+
+*/
+
+stage("Download Tests from Github")
+{
+    node{
+        println "${ISPW_Release}"
+        
+       //Download the test from github
+        checkout changelog: false, 
+           poll: false, 
+           scm: [$class: 'GitSCM', 
+           branches: [[name: '*/master']], 
+           doGenerateSubmoduleConfigurations: false, 
+           extensions: [], 
+           submoduleCfg: [], 
+           userRemoteConfigs: 
+              [[credentialsId: github_credentials, 
+              name: 'origin', 
+              url: github_url]]]
+
+    }
+}
+
+stage("Download Source from ISPW")
+{
+
+    node{
+        //Download the source
+        checkout([$class: 'IspwConfiguration', 
+        componentType: 'COB, COPY',                             //Retrieve only cobol code and copybooks
+        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',   //This is the ID for CWCC's HCI
+        credentialsId: "${Jenkins_Id}",  
+        levelOption: '0',                                       //0-selected level only 1-first found and above
+        serverApplication: "${ISPW_Application}", 
+        serverConfig: "${ISPW_RuntimeConfig}", 
+        serverLevel: "${ISPW_QA_Level}", 
+        serverStream: "${ISPW_Stream}"])
+    }
+
+} 
+ 
+stage("Run Total Tests")
+{
+    node{
+        // Run Total Test Jenkins Plugin
+        step([$class: 'TotalTestBuilder', 
+        ccRepo: "${CC_repository}",
+        ccSystem: "${TTT_Project}", 
+        ccTestId: "${BUILD_DISPLAY_NAME}",  //resolves to build number, i.e. #177 
+        credentialsId: "${Jenkins_Id}", 
+        deleteTemp: true, 
+        hlq: '', 
+        //hostPort: "${HCI_Connection}", 
+        connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+        jcl: "${TTT_Jcl}", 
+        projectFolder: "${TTT_Project}", 
+        testSuite: "${TTT_TestPackage}${TTT_PackageType}", 
+        useStubs: true])
+        
+        // Process the Total Test result files into Jenkins
+        junit keepLongStdio: true, testResults: 'TTTUnit/*.xml'
+    }
+}
+
+stage("Retrieve Code Coverage Data")
+{
+    node{
+        // Retrieve code coverage data
+        string sources="${ISPW_Application}\\MF_Source"
+        def ccproperties   = 'cc.sources=' + sources + '\rcc.repos=' + CC_repository + '\rcc.system=' + TTT_Project + '\rcc.test=' + BUILD_DISPLAY_NAME + '\rcc.ddio.overrides='
+        step([$class: 'CodeCoverageBuilder',
+        analysisProperties: ccproperties,
+            analysisPropertiesPath: '',
+            connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131',
+            credentialsId: Jenkins_Id])
+    }
+}
+
+stage("SonarQube Analysis") 
+{
+    node{
+        // Requires SonarQube Scanner 2.8+
+        def scannerHome = tool 'scanner';
+        withSonarQubeEnv('localhost') 
+        {
+            // Run SonarQube Scanner 
+            def SQ_Tests                = " -Dsonar.tests=${TTT_Project} -Dsonar.testExecutionReportPaths=TTTSonar/${TTT_PackageSonar}.xml -Dsonar.coverageReportPaths=Coverage/CodeCoverage.xml"
+            def SQ_ProjectKey           = " -Dsonar.projectKey=${SQ_Project} -Dsonar.projectName=${SQ_Project} -Dsonar.projectVersion=1.0"
+            def SQ_Source               = " -Dsonar.sources=${ISPW_Application}\\MF_Source"
+            def SQ_Copybook             = " -Dsonar.cobol.copy.directories=${ISPW_Application}"
+            def SQ_Cobol_conf           = " -Dsonar.cobol.file.suffixes=cbl,testsuite,testscenario,stub -Dsonar.cobol.copy.suffixes=cpy -Dsonar.sourceEncoding=UTF-8"
+            bat "${scannerHome}/bin/sonar-scanner" + SQ_Tests + SQ_ProjectKey + SQ_Source + SQ_Copybook + SQ_Cobol_conf
+        }
+    }
+}
+stage("Check Quality Gate")
+{
+    node{ 
+        timeout(time: 2, unit: 'MINUTES') {
+            // Wait for webhook call back from SonarQube
+            def qg = waitForQualityGate()
+            if (qg.status != 'OK')
+            {
+                echo "Pipeline aborted due to quality gate failure: ${qg.status}"
+                
+                // If the quality gate is anything other than Green, regress the promoted code
+               // Define variables to be used to call ISPW
+               def ces
+               def container
+               ces                 = "${Jenkins_CES}"
+               String ispwRequestBdy = /assignmentId=${ISPW_Container}
+                  level=${ISPW_QA_Level} 
+                  runtimeConfiguration=${ISPW_RuntimeConfig} 
+                  events.name=Completed events.body=Regressed
+                  events.httpHeaders=Jenkins-Crumb:no-crumb
+                  events.credentials=admin:library/
+
+               // Call ISPW Operation
+               ispwOperation connectionId: 'de2ad7c3-e924-4dc2-84d5-d0c3afd3e756',
+               credentialsId: ces,
+               ispwAction: 'RegressAssignment',
+               ispwRequestBody: ispwRequestBdy
+                
+                error "Exiting Pipeline"
+            }
+            else{
+                echo "Quality Gate status is: {${qg.status}"
+            }
+        }   
+    }
+}
+
+/*
+stage("Promote to STG Level")
+{
+    node
+    {
+        
+        // Define variables to be used to call ISPW
+        def ces
+        def container
+        ces                 = "${Jenkins_CES}"
+        String ispwRequestBdy = /assignmentId=${ISPW_Container}
+           level=${ISPW_QA_Level} 
+           runtimeConfiguration=${ISPW_RuntimeConfig} 
+           events.name=Completed events.body=Promoted
+           events.httpHeaders=Jenkins-Crumb:no-crumb
+           events.credentials=admin:library/
+
+        // Call ISPW Operation
+        ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131', credentialsId: ces, ispwAction: 'PromoteAssignment', ispwRequestBody: ispwRequestBdy
+        //ispwOperation connectionId: '91bae501-8b4d-4155-909d-2ad5aa9f3131', credentialsId: ces, ispwAction: 'PromoteAssignment', ispwRequestBody: ispwRequestBdy
+        }
+}
+*/
+
+stage("Start Release in XL Release")
+{
+    node{
+        // Trigger XL Release Jenkins Plugin to kickoff a Release
+        //xlrCreateRelease releaseTitle: 'Release for $BUILD_TAG',
+        //serverCredentials: "${XLR_User}",
+        //startRelease: true, template: "${XLR_Template}",
+        //variables: [[propertyName: 'ISPW_Dev_level',
+        //propertyValue: "${ISPW_Dev_Level}"],
+        //[propertyName: 'ISPW_Stg_Level', propertyValue: "${ISPW_Stg_Level}"],
+        //[propertyName: 'ISPW_RELEASE_ID', propertyValue: "${ISPW_Container}"], 
+        //[propertyName: 'CES_Token', propertyValue: "${CES_Token}"]]
+        
+        // New syntax
+        xlrCreateRelease releaseTitle: 'Release for ' + ISPW_Owner + '-$BUILD_TAG', 
+        serverCredentials: "${XLR_User}", 
+        startRelease: true, template: "${XLR_Template}", 
+        variables: [[propertyName: 'ISPW_Dev_level', 
+        propertyValue:  "${ISPW_Dev_Level}"], 
+        [propertyName: 'ISPW_STG_Level', propertyValue: "${ISPW_Stg_Level}"], 
+        [propertyName: 'ISPW_RELEASE_ID', propertyValue: "${ISPW_Release}"], 
+        [propertyName: 'ISPW_Token', propertyValue: "${CES_Token}"]]
+    }
+}
+
+stage("Send Email")
+{
+    def mailRecipients = "manoj_singh@bmc.com"
+            
+            // Email
+            emailext subject: '$DEFAULT_SUBJECT',
+                        body: '$DEFAULT_CONTENT',
+                        //body: '$DEFAULT_CONTENT',
+                        replyTo: '$DEFAULT_REPLYTO',
+                        //attachmentsPattern: 'reports/*.zip',
+                        to: "${mailRecipients}"
+}
