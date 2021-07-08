@@ -338,9 +338,9 @@ stage("Check Quality Gate")
             //     error "Exiting Pipeline"
             }
             else{
-                emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
-                subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
-                to: 'ed.gannaway@compuware.com'
+             //   emailext body: 'Your Assignment: ${ISPW_Container} Passed the Quality Gate', 
+             //   subject: 'Your Assignment: ${ISPW_Container} Passed The Quality Gate', 
+             //   to: 'ed.gannaway@compuware.com'
                     
                 echo "Quality Gate status is: {${qg.status}"
             }
