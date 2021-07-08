@@ -307,7 +307,7 @@ stage("Check Quality Gate")
         println "*   The start of:           "
         println "*                 Check Quality Gate Stage          "
         println "*************************************************************************************************************************************************" 
-        timeout(time: 4, unit: 'MINUTES') {
+        timeout(time: 2, unit: 'MINUTES') {
             // Wait for webhook call back from SonarQube
             def qg = waitForQualityGate()
             if (qg.status != 'OK')
