@@ -347,23 +347,23 @@ stage("Check Quality Gate")
         }   
     }
 }
-stage("Veracode Scanning")
-{
-    node {
-        veracode applicationName: 'Topaz Demo', 
-        criticality: 'VeryLow', 
-        debug: true, 
-        fileNamePattern: '', 
-        replacementPattern: '', 
-        sandboxName: 'Development Sandbox', 
-        scanExcludesPattern: '', 
-        scanIncludesPattern: '', 
-        scanName: '$buildnumber', 
-        teams: 'Integration', 
-        timeout: 60, 
-        uploadIncludesPattern: "V${ISPW_Application}\\MF_Source", 
-        vid: 'b25523eb0615c5bba0544afb57e1313b', 
-        vkey: 'a52069c214271ed73ebedf8a653ab07151dbfc46cd90330f8937756c93b19ac0db2eadabbb4ac461f15ea529bf5484aa2349cfd98c27a8bac324434a6942b008', 
-        waitForScan: true
-    }
-}
+//stage("Veracode Scanning")
+//{
+//    node {
+//        veracode applicationName: 'Topaz Demo', 
+//        criticality: 'VeryLow', 
+//        debug: true, 
+//        fileNamePattern: '', 
+//        replacementPattern: '', 
+//        sandboxName: 'Development Sandbox', 
+//        scanExcludesPattern: '', 
+//        scanIncludesPattern: '', 
+//        scanName: '$buildnumber', 
+//        teams: 'Integration', 
+//        timeout: 60, 
+//        uploadIncludesPattern: "V${ISPW_Application}\\MF_Source", 
+//        vid: 'b25523eb0615c5bba0544afb57e1313b', 
+//        vkey: 'a52069c214271ed73ebedf8a653ab07151dbfc46cd90330f8937756c93b19ac0db2eadabbb4ac461f15ea529bf5484aa2349cfd98c27a8bac324434a6942b008', 
+//        waitForScan: true
+//    }
+//}
